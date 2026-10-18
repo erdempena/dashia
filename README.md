@@ -15,7 +15,7 @@
 ## ✨ Özellikler
 
 - **🧩 Modüler ve Boyutlandırılabilir Kokpit Düzeni**
-  - Herhangi bir پanele uzun basarak widget'ları anında değiştirin (`Saat`, `GPS Hız Göstergesi`, `Medya Kontrolcüsü`, `Canlı Harita` veya `Gizli`).
+  - Herhangi bir panele uzun basarak widget'ları anında değiştirin (`Saat`, `GPS Hız Göstergesi`, `Medya Kontrolcüsü`, `Canlı Harita` veya `Gizli`).
   - Paneller arasındaki ayırıcı çizgileri sürükleyerek boyutları dilediğiniz gibi ayarlayın veya Ayarlar'dan boyutlandırma çubuklarını gizleyerek düzeni kilitleyin.
 - **🗺️ Akıcı 60 FPS Canlı Harita ve Çevrimdışı OSM Motoru**
   - **OpenStreetMap** (ücretsiz, API anahtarı gerektirmez) ve **Google Maps SDK** desteği.
@@ -24,7 +24,6 @@
   - **Dahili Çevrimdışı Bölge İndirici**: SIM kartı olmayan multimedya cihazlarında %100 internetsiz navigasyon için şehir/bölge haritalarını doğrudan cihaz hafızasına indirin.
 - **🎵 Evrensel Medya Oturumu Kontrolcüsü**
   - Spotify, YouTube Music, Poweramp, AIMP, Bluetooth A2DP müzik akışı ve yerleşik FM Radyo uygulamalarını destekleyen yerel `NotificationListenerService` + `MediaSessionManager` köprüsü.
-  - Geç yanıt veren medya oynatıcılar için otomatik yeniden deneme mekanizması ve gerçek zamanlı albüm kapağı çekme özelliği.
 - **🎨 Tema Motoru, Material You ve Özel Yazı Tipleri**
   - Hazır temalar (*Obsidian Red*, *Material You*, *Carbon Blue*, *Cockpit Amber*, *Emerald*, *Daylight*) ve tüm temalarla (Material You dahil) uyumlu **Özel HEX Renk Seçici**.
   - 6 dahili kokpit fontu + cihaz hafızasından **Özel `.ttf` / `.otf` Font Yükleyici**.
@@ -36,7 +35,7 @@
 ## 📦 Kurulum ve Kullanım
 
 ### 1. Araç Multimedya Cihazına Kurulum (APK)
-Uygulamayı kod derlemeden doğrudan aracınızın multimedya ekranına veya Android tabletinize kurmak için:
+Uygulamayı doğrudan aracınızın multimedya ekranına veya Android tabletinize kurmak için:
 
 1. **APK İndirin:** Sağ taraftaki [**Releases**](../../releases) bölümünden en güncel `Dashia-v1.0.0.apk` dosyasını indirin ve USB bellek veya tarayıcı ile multimedya cihazınıza aktarıp kurun.
 2. **Konum İzni (GPS & Harita):** İlk açılışta hız göstergesi ve canlı haritanın çalışması için konum iznini **"Her zaman / Uygulama kullanılırken izin ver"** olarak onaylayın.
@@ -63,7 +62,6 @@ Uygulamayı kod derlemeden doğrudan aracınızın multimedya ekranına veya And
   - **Built-in Offline Region Downloader**: Download city/region tiles directly to device storage for 100% offline navigation on head units without SIM cards.
 - **🎵 Universal Media Session Controller**
   - Native `NotificationListenerService` + `MediaSessionManager` bridge supporting Spotify, YouTube Music, Poweramp, AIMP, Bluetooth A2DP streaming, and stock FM Radio apps.
-  - Real-time album art extraction with automatic metadata retry for delayed players.
 - **🎨 Theme Engine, Material You & Custom Fonts**
   - Presets (*Obsidian Red*, *Material You*, *Carbon Blue*, *Cockpit Amber*, *Emerald*, *Daylight*) plus a full **Custom HEX Color Picker** (works across all themes including Material You).
   - 6 built-in cockpit typefaces + **Custom `.ttf` / `.otf` Font Loader** from device storage.
