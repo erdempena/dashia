@@ -76,6 +76,16 @@ class _Art extends StatelessWidget {
   final double size;
   const _Art({required this.m, required this.size});
 
+  bool get _isBluetooth {
+    final p = (m.packageName ?? '').toLowerCase();
+    return p == 'com.syu.bt' ||
+        p.contains('bluetooth') ||
+        p.contains('a2dp') ||
+        p.contains('avrcp') ||
+        p.contains('btmusic') ||
+        p.contains('.bt');
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.c;
@@ -94,7 +104,75 @@ class _Art extends StatelessWidget {
                 gaplessPlayback: true,
                 cacheWidth: 300,
               )
-            : Icon(Icons.music_note_rounded, size: size * 0.45, color: c.accent),
+            : _isBluetooth
+                ? _BtVinylIcon(size: size)
+                : Icon(Icons.music_note_rounded, size: size * 0.45, color: c.accent),
+      ),
+    );
+  }
+}
+
+/// Seçenek 4: Plak & Bluetooth (Bluetooth bağlıyken kapak yoksa gösterilen simge).
+class _BtVinylIcon extends StatelessWidget {
+  final double size;
+  const _BtVinylIcon({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final discSize = size * 0.76;
+    final grooveSize = size * 0.58;
+    final centerSize = size * 0.36;
+    return Center(
+      child: Container(
+        width: discSize,
+        height: discSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const RadialGradient(
+            colors: [Color(0xFF263042), Color(0xFF141A24), Color(0xFF202938), Color(0xFF0D1118)],
+            stops: [0.0, 0.45, 0.72, 1.0],
+          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.14), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Container(
+            width: grooveSize,
+            height: grooveSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.2),
+            ),
+            child: Center(
+              child: Container(
+                width: centerSize,
+                height: centerSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: c.accent,
+                  boxShadow: [
+                    BoxShadow(
+                      color: c.accent.withValues(alpha: 0.45),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.bluetooth_rounded,
+                  size: size * 0.22,
+                  color: c.onAccent,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

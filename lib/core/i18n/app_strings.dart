@@ -93,6 +93,8 @@ class AppStrings {
   String get themeLight => _t({'tr': 'Açık', 'en': 'Light', 'de': 'Hell', 'fr': 'Clair', 'es': 'Claro', 'ru': 'Светлая'});
   String get accentColor => _t({'tr': 'Vurgu rengi', 'en': 'Accent color', 'de': 'Akzentfarbe', 'fr': 'Couleur d\'accent', 'es': 'Color de acento', 'ru': 'Акцентный цвет'});
   String get customHexLabel => _t({'tr': 'Özel renk kodu (HEX)', 'en': 'Custom color (HEX)', 'de': 'Eigene Farbe (HEX)', 'fr': 'Couleur HEX', 'es': 'Color personalizado (HEX)', 'ru': 'Свой цвет (HEX)'});
+  String get saveColorBtn => _t({'tr': 'Rengi Kaydet', 'en': 'Save Color', 'de': 'Farbe speichern', 'fr': 'Enregistrer couleur', 'es': 'Guardar color', 'ru': 'Сохранить цвет'});
+  String get savedColorsTitle => _t({'tr': 'Kaydedilen renkler', 'en': 'Saved colors', 'de': 'Gespeicherte Farben', 'fr': 'Couleurs enregistrées', 'es': 'Colores guardados', 'ru': 'Сохранённые цвета'});
   String get cornerRadius => _t({'tr': 'Köşe yuvarlaklığı', 'en': 'Corner radius', 'de': 'Eckenradius', 'fr': 'Rayon des coins', 'es': 'Radio de esquinas', 'ru': 'Скругление углов'});
   String get fontFamilyTitle => _t({'tr': 'Yazı tipi', 'en': 'Font family', 'de': 'Schriftart', 'fr': 'Police d\'écriture', 'es': 'Fuente', 'ru': 'Шрифт'});
   String get uploadFontBtn => _t({'tr': 'Font Yükle (.ttf / .otf)', 'en': 'Load Font (.ttf / .otf)', 'de': 'Schrift laden (.ttf / .otf)', 'fr': 'Charger police (.ttf / .otf)', 'es': 'Cargar fuente (.ttf / .otf)', 'ru': 'Загрузить шрифт (.ttf / .otf)'});
@@ -230,4 +232,5 @@ class AppStrings {
   String get mapWarm => _t({'tr': 'Kehribar', 'en': 'Amber', 'de': 'Bernstein', 'fr': 'Ambre', 'es': 'Ámbar', 'ru': 'Янтарь'});
   String get showSpeedChip => mapShowSpeedTitle;
   String get rotateMapHeading => mapRotateTitle;
+  String get close => _t({'tr': 'Kapat', 'en': 'Close', 'de': 'Schließen', 'fr': 'Fermer', 'es': 'Cerrar', 'ru': 'Закрыть'});
 }

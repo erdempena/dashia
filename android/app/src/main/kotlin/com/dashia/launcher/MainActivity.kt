@@ -13,7 +13,9 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
 import android.provider.Settings
+import android.service.notification.NotificationListenerService
 import android.view.KeyEvent
+import com.dashia.launcher.media.FytMediaBridge
 import com.dashia.launcher.media.MediaListenerService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -116,13 +118,72 @@ class MainActivity : FlutterActivity() {
         }
 
         // ---------- Medya kontrol ----------
+        val fyt = FytMediaBridge.getInstance(this).also { bridge ->
+            if (bridge.onStateChanged == null) {
+                bridge.onStateChanged = {
+                    if (MediaListenerService.controller == null && bridge.hasActiveTrack) {
+                        val state = mapOf(
+                            "hasSession" to true,
+                            "title" to bridge.title.ifBlank { bridge.phoneName.ifBlank { "Bluetooth Müzik" } },
+                            "artist" to bridge.artist.ifBlank { bridge.phoneName },
+                            "album" to bridge.album,
+                            "isPlaying" to bridge.isPlaying,
+                            "packageName" to "com.syu.bt",
+                            "albumArt" to null,
+                        )
+                        MediaListenerService.activeSource = "fyt"
+                        MediaListenerService.lastState = state
+                        MediaListenerService.listener?.invoke(state)
+                    }
+                }
+            }
+            bridge.start()
+        }
+        try {
+            NotificationListenerService.requestRebind(ComponentName(this, MediaListenerService::class.java))
+        } catch (_: Exception) {}
+
         MethodChannel(messenger, "com.dashia.launcher/media").setMethodCallHandler { call, result ->
             when (call.method) {
-                "togglePlayPause" -> { control(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) { c ->
-                    if (MediaListenerService.isPlaying(c)) c.transportControls.pause() else c.transportControls.play() }; result.success(true) }
-                "skipNext" -> { control(KeyEvent.KEYCODE_MEDIA_NEXT) { it.transportControls.skipToNext() }; result.success(true) }
-                "skipPrevious" -> { control(KeyEvent.KEYCODE_MEDIA_PREVIOUS) { it.transportControls.skipToPrevious() }; result.success(true) }
+                "togglePlayPause" -> {
+                    if (MediaListenerService.activeSource == "fyt" || (MediaListenerService.controller == null && fyt.btModuleConnected)) {
+                        if (!fyt.togglePlayPause()) dispatchMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+                    } else {
+                        control(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) { c ->
+                            if (MediaListenerService.isPlaying(c)) c.transportControls.pause() else c.transportControls.play()
+                        }
+                    }
+                    result.success(true)
+                }
+                "skipNext" -> {
+                    if (MediaListenerService.activeSource == "fyt" || (MediaListenerService.controller == null && fyt.btModuleConnected)) {
+                        if (!fyt.skipNext()) dispatchMediaKey(KeyEvent.KEYCODE_MEDIA_NEXT)
+                    } else {
+                        control(KeyEvent.KEYCODE_MEDIA_NEXT) { it.transportControls.skipToNext() }
+                    }
+                    result.success(true)
+                }
+                "skipPrevious" -> {
+                    if (MediaListenerService.activeSource == "fyt" || (MediaListenerService.controller == null && fyt.btModuleConnected)) {
+                        if (!fyt.skipPrevious()) dispatchMediaKey(KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+                    } else {
+                        control(KeyEvent.KEYCODE_MEDIA_PREVIOUS) { it.transportControls.skipToPrevious() }
+                    }
+                    result.success(true)
+                }
                 "isListenerEnabled" -> result.success(isListenerEnabled())
+                "getDiagnostics" -> {
+                    val diag = HashMap(MediaListenerService.diagnostics())
+                    if (diag["fyt"] == null) diag["fyt"] = fyt.diagnostics()
+                    diag["listenerEnabled"] = isListenerEnabled()
+                    diag["androidVersion"] = "Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})"
+                    diag["device"] = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} / ${android.os.Build.HARDWARE}"
+                    io.execute {
+                        val apps = try { mediaRelatedApps() } catch (e: Exception) { emptyList() }
+                        diag["mediaApps"] = apps
+                        main.post { result.success(diag) }
+                    }
+                }
                 "openListenerSettings" -> {
                     try {
                         startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -225,13 +286,31 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    /** Aktif oturum varsa doğrudan onu kontrol eder; yoksa medya tuşu gönderir. */
+    /**
+     * Aktif oturum varsa doğrudan onu kontrol eder; yoksa veya çalan kaynak broadcast tabanlıysa
+     * (MediaSession açmayan Bluetooth müzik uygulamaları) sisteme medya tuşu gönderir.
+     */
     private fun control(keyCode: Int, action: (android.media.session.MediaController) -> Unit) {
-        val c = MediaListenerService.controller
+        val c = if (MediaListenerService.useMediaKeys) null else MediaListenerService.controller
         if (c != null) { action(c); return }
+        dispatchMediaKey(keyCode)
+    }
+
+    private fun dispatchMediaKey(keyCode: Int) {
         val am = getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
         am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
         am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
+    }
+
+    /** Tanılama için Bluetooth/müzik ile ilgili görünen uygulama paketleri. */
+    private fun mediaRelatedApps(): List<String> {
+        val pattern = Regex("bluetooth|(^|\\.)bt|music|media|audio|a2dp|player", RegexOption.IGNORE_CASE)
+        @Suppress("DEPRECATION")
+        return packageManager.getInstalledApplications(0)
+            .map { it.packageName }
+            .filter { pattern.containsMatchIn(it) }
+            .sorted()
+            .take(40)
     }
 
     private fun isListenerEnabled(): Boolean {

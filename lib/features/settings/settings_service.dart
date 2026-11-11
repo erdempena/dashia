@@ -61,6 +61,7 @@ class SettingsService extends ChangeNotifier {
   String uiStyle = 'classic'; // classic | material
   String themeMode = 'dark'; // dark | amoled | light
   int accent = 0xFF00D2FF;
+  List<int> savedColors = [];
   double radius = 14;
   bool fullscreen = true;
   String fontFamily = 'system';
@@ -116,6 +117,7 @@ class SettingsService extends ChangeNotifier {
       uiStyle = j['uiStyle'] ?? uiStyle;
       themeMode = j['themeMode'] ?? themeMode;
       accent = j['accent'] ?? accent;
+      savedColors = (j['savedColors'] as List?)?.map((e) => (e as num).toInt()).toList() ?? [];
       radius = (j['radius'] ?? radius).toDouble();
       fullscreen = j['fullscreen'] ?? fullscreen;
       fontFamily = j['fontFamily'] ?? fontFamily;
@@ -165,6 +167,7 @@ class SettingsService extends ChangeNotifier {
         'uiStyle': uiStyle,
         'themeMode': themeMode,
         'accent': accent,
+        'savedColors': savedColors,
         'radius': radius,
         'fullscreen': fullscreen,
         'fontFamily': fontFamily,
@@ -252,6 +255,22 @@ class SettingsService extends ChangeNotifier {
         barHeight = 78;
       });
   void resetShortcuts() => update(() => shortcuts = defaultShortcuts());
+
+  void saveCustomColor(int color) {
+    final normalized = 0xFF000000 | (color & 0xFFFFFF);
+    update(() {
+      accent = normalized;
+      if (!savedColors.contains(normalized)) {
+        savedColors = [...savedColors, normalized];
+      }
+    });
+  }
+
+  void removeSavedColor(int color) {
+    update(() {
+      savedColors = savedColors.where((c) => c != color).toList();
+    });
+  }
 
   String newShortcutId() => 's${DateTime.now().microsecondsSinceEpoch}';
 }

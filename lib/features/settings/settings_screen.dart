@@ -186,8 +186,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
         currentAccent: s.accent,
         labelText: tr.customHexLabel,
         applyLabel: tr.apply,
+        saveLabel: tr.saveColorBtn,
         onChanged: (v) => s.update(() => s.accent = v),
+        onSave: (v) => s.saveCustomColor(v),
       ),
+      if (s.savedColors.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        Text(tr.savedColorsTitle, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: c.textMuted)),
+        const SizedBox(height: 8),
+        Wrap(spacing: 12, runSpacing: 12, children: [
+          for (final sc in s.savedColors)
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                GestureDetector(
+                  onTap: () => s.update(() => s.accent = sc),
+                  onLongPress: () => s.removeSavedColor(sc),
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Color(sc),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: s.accent == sc ? c.text : c.border, width: s.accent == sc ? 4 : 1),
+                    ),
+                    child: s.accent == sc
+                        ? Icon(Icons.check_rounded, color: Color(sc).computeLuminance() > 0.5 ? Colors.black : Colors.white)
+                        : null,
+                  ),
+                ),
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: GestureDetector(
+                    onTap: () => s.removeSavedColor(sc),
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: c.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: c.border, width: 1.5),
+                      ),
+                      child: Icon(Icons.close_rounded, size: 14, color: c.text),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ]),
+      ],
       const Divider(height: 28),
       _slider(tr.cornerRadius, s.radius, 4, 28, 12, (v) => s.radius = v, '${s.radius.round()}'),
       const Divider(height: 28),
@@ -406,7 +454,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Dashia v1.1.0', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              const Text('Dashia v1.2.0', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
               Text(tr.systemAboutDesc, style: TextStyle(color: c.textMuted)),
               const SizedBox(height: 4),
@@ -424,12 +472,16 @@ class _HexField extends StatefulWidget {
   final int currentAccent;
   final String labelText;
   final String applyLabel;
+  final String saveLabel;
   final void Function(int) onChanged;
+  final void Function(int) onSave;
   const _HexField({
     required this.currentAccent,
     required this.labelText,
     required this.applyLabel,
+    required this.saveLabel,
     required this.onChanged,
+    required this.onSave,
   });
 
   @override
@@ -458,23 +510,32 @@ class _HexFieldState extends State<_HexField> {
     super.dispose();
   }
 
-  void _applyHex(String raw) {
+  int? _parseHex(String raw) {
     var clean = raw.replaceAll('#', '').trim().toUpperCase();
     if (clean.length == 3) {
       clean = '${clean[0]}${clean[0]}${clean[1]}${clean[1]}${clean[2]}${clean[2]}';
     }
     if (clean.length == 6) {
       final n = int.tryParse(clean, radix: 16);
-      if (n != null) {
-        widget.onChanged(0xFF000000 | n);
-      }
+      if (n != null) return 0xFF000000 | n;
     }
+    return null;
+  }
+
+  void _applyHex(String raw) {
+    final color = _parseHex(raw);
+    if (color != null) widget.onChanged(color);
+  }
+
+  void _saveHex(String raw) {
+    final color = _parseHex(raw) ?? widget.currentAccent;
+    widget.onSave(color);
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.c;
-    return Row(mainAxisSize: MainAxisSize.min, children: [
+    return Wrap(spacing: 10, runSpacing: 10, crossAxisAlignment: WrapCrossAlignment.center, children: [
       Container(
         width: 44,
         height: 44,
@@ -484,7 +545,6 @@ class _HexFieldState extends State<_HexField> {
           border: Border.all(color: c.text.withValues(alpha: 0.4), width: 2),
         ),
       ),
-      const SizedBox(width: 12),
       SizedBox(
         width: 220,
         child: TextField(
@@ -503,10 +563,14 @@ class _HexFieldState extends State<_HexField> {
           onSubmitted: _applyHex,
         ),
       ),
-      const SizedBox(width: 10),
       FilledButton.tonal(
         onPressed: () => _applyHex(_ctl.text),
         child: Text(widget.applyLabel),
+      ),
+      FilledButton.tonalIcon(
+        onPressed: () => _saveHex(_ctl.text),
+        icon: const Icon(Icons.bookmark_add_rounded, size: 20),
+        label: Text(widget.saveLabel),
       ),
     ]);
   }

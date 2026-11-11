@@ -58,6 +58,16 @@ class MediaService {
   Future<void> skipNext() => _call('skipNext');
   Future<void> skipPrevious() => _call('skipPrevious');
 
+  /// Medya kaynakları için canlı teşhis verisi (oturumlar, broadcast yayınları, cihaz bilgisi).
+  Future<Map<String, dynamic>> getDiagnostics() async {
+    try {
+      final r = await _method.invokeMethod<Map<dynamic, dynamic>>('getDiagnostics');
+      return r == null ? {} : Map<String, dynamic>.from(r);
+    } catch (e) {
+      return {'error': '$e'};
+    }
+  }
+
   void dispose() {
     _sub?.cancel();
     current.dispose();
