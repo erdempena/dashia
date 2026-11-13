@@ -7,14 +7,13 @@ import '../../core/theme/dashia_colors.dart';
 import '../apps/services/app_launcher_service.dart';
 import '../dashboard/presentation/widgets/app_icon.dart';
 import '../dashboard/presentation/widgets/shortcut_editor.dart';
-import '../map/map_support.dart';
 import '../map/offline_map_service.dart';
 import '../media/services/media_service.dart';
 import 'settings_service.dart';
 
 const _accents = <int>[
-  0xFF00D2FF, 0xFF38BDF8, 0xFF3B82F6, 0xFF8B5CF6, 0xFFEC4899, 0xFFEF4444,
-  0xFFF97316, 0xFFF59E0B, 0xFFEAB308, 0xFF84CC16, 0xFF10B981, 0xFFFFFFFF,
+  0xFF2ECC71, 0xFF00D2FF, 0xFF38BDF8, 0xFF3B82F6, 0xFF8B5CF6, 0xFFEC4899,
+  0xFFEF4444, 0xFFF97316, 0xFFF59E0B, 0xFFEAB308, 0xFF84CC16, 0xFF10B981, 0xFFFFFFFF,
 ];
 
 /// Dashia ayarları: tema, renk, harita, saat/hız, medya, kısayollar, sistem ve dil.
@@ -144,9 +143,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           segments: [
             ButtonSegment(value: 'classic', label: Text(tr.styleClassic), icon: const Icon(Icons.crop_square_rounded)),
             const ButtonSegment(value: 'material', label: Text('Material'), icon: Icon(Icons.auto_awesome_rounded)),
+            ButtonSegment(value: 'minimalist', label: Text(tr.styleMinimalist), icon: const Icon(Icons.space_dashboard_rounded)),
           ],
           selected: {s.uiStyle},
-          onSelectionChanged: (v) => s.update(() => s.uiStyle = v.first),
+          onSelectionChanged: (v) => s.update(() {
+            s.uiStyle = v.first;
+            s.showTopBar = v.first == 'minimalist';
+          }),
         ),
         sub: tr.uiStyleSub,
       ),
@@ -306,6 +309,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _switch(tr.format24h, s.use24h, (v) => s.use24h = v),
       _switch(tr.showSeconds, s.showSeconds, (v) => s.showSeconds = v),
       _switch(tr.showDate, s.showDate, (v) => s.showDate = v),
+      _switch(tr.clockShowSpeedTitle, s.clockShowSpeed, (v) => s.clockShowSpeed = v, sub: tr.clockShowSpeedSub),
+      const Divider(height: 28),
+      Text(tr.topBarSectionTitle, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 4),
+      _switch(tr.showTopBarTitle, s.showTopBar, (v) => s.showTopBar = v, sub: tr.showTopBarSub),
+      if (s.showTopBar) ...[
+        _switch(tr.topBarShowGpsTitle, s.topBarShowGps, (v) => s.topBarShowGps = v),
+        _switch(tr.topBarShowClockTitle, s.topBarShowClock, (v) => s.topBarShowClock = v),
+        _switch(tr.topBarShowDateTitle, s.topBarShowDate, (v) => s.topBarShowDate = v),
+        _switch(tr.topBarShowSpeedTitle, s.topBarShowSpeed, (v) => s.topBarShowSpeed = v),
+      ],
       const Divider(height: 28),
       _row(
         tr.speedUnit,
@@ -324,6 +338,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final tr = s.tr;
     return [
       _switch(tr.showAlbumArt, s.showAlbumArt, (v) => s.showAlbumArt = v),
+      _slider(
+        tr.mediaControlScaleTitle,
+        s.mediaControlScale,
+        0.85,
+        1.50,
+        13,
+        (v) => s.mediaControlScale = double.parse(v.toStringAsFixed(2)),
+        '%${(s.mediaControlScale * 100).round()}',
+      ),
       const Divider(height: 28),
       ValueListenableBuilder<bool>(
         valueListenable: widget.media.hasAccess,
@@ -409,6 +432,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
       Align(alignment: Alignment.centerLeft, child: TextButton(onPressed: s.resetShortcuts, child: Text(tr.resetShortcutsBtn))),
+      const Divider(height: 28),
+      Row(children: [
+        Expanded(
+          child: Text(
+            '${tr.sideShortcutsTitle} (${s.sideShortcuts.length}/${SettingsService.maxSideShortcuts})',
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          ),
+        ),
+        if (s.sideShortcuts.length < SettingsService.maxSideShortcuts)
+          FilledButton.icon(
+            onPressed: () => showShortcutEditor(context, settings: s, apps: widget.apps, isSidePanel: true),
+            icon: const Icon(Icons.add_rounded),
+            label: Text(tr.addShortcutBtn),
+          ),
+      ]),
+      const SizedBox(height: 4),
+      Text(tr.sideShortcutsSub, style: TextStyle(fontSize: 13, color: c.textMuted)),
+      const SizedBox(height: 6),
+      _switch(
+        tr.sideShortcutsShowLabelsTitle,
+        s.sideShortcutsShowLabels,
+        (v) => s.sideShortcutsShowLabels = v,
+        sub: tr.sideShortcutsShowLabelsSub,
+      ),
+      const SizedBox(height: 4),
+      ReorderableListView(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        buildDefaultDragHandles: true,
+        onReorderItem: (o, n) => s.moveSideShortcut(o, n),
+        children: [
+          for (final sc in s.sideShortcuts)
+            ListTile(
+              key: ValueKey('side_${sc.id}'),
+              leading: SizedBox(width: 40, child: ShortcutIcon(apps: widget.apps, shortcut: sc, size: 30)),
+              title: Text(sc.label),
+              subtitle: Text(sc.package ?? '—', style: TextStyle(color: c.textMuted, fontSize: 12)),
+              onTap: () => showShortcutEditor(context, settings: s, apps: widget.apps, existing: sc, isSidePanel: true),
+              trailing: Padding(
+                padding: const EdgeInsets.only(right: 36),
+                child: IconButton(
+                  icon: const Icon(Icons.edit_rounded),
+                  onPressed: () => showShortcutEditor(context, settings: s, apps: widget.apps, existing: sc, isSidePanel: true),
+                ),
+              ),
+            ),
+        ],
+      ),
+      Align(alignment: Alignment.centerLeft, child: TextButton(onPressed: s.resetSideShortcuts, child: Text(tr.resetSideShortcutsBtn))),
     ];
   }
 
@@ -454,11 +526,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Dashia v1.2.0', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              const Text('Dashia v1.3.0', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
               Text(tr.systemAboutDesc, style: TextStyle(color: c.textMuted)),
               const SizedBox(height: 4),
-              Text('© OpenStreetMap contributors · Google Maps Platform', style: TextStyle(color: c.textMuted, fontSize: 12)),
+              Text('© OpenStreetMap contributors', style: TextStyle(color: c.textMuted, fontSize: 12)),
             ]),
           ),
         ]),
@@ -645,15 +717,6 @@ class _MapSettingsState extends State<_MapSettings> {
         ]),
       );
 
-  Widget _status(bool ok, String text) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(children: [
-          Icon(ok ? Icons.check_circle_rounded : Icons.error_rounded, size: 20, color: ok ? Colors.green : Colors.amber),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text)),
-        ]),
-      );
-
   @override
   Widget build(BuildContext context) {
     final c = context.c;
@@ -671,16 +734,6 @@ class _MapSettingsState extends State<_MapSettings> {
     return ListenableBuilder(
       listenable: Listenable.merge([s, mgr]),
       builder: (context, _) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _row(
-          tr.mapProviderTitle,
-          SegmentedButton<String>(
-            segments: const [ButtonSegment(value: 'osm', label: Text('OpenStreetMap')), ButtonSegment(value: 'google', label: Text('Google Maps'))],
-            selected: {s.mapProvider},
-            onSelectionChanged: (v) => s.update(() => s.mapProvider = v.first),
-          ),
-        ),
-        const Divider(height: 24),
-
         // ---------- ÇEVRİMDIŞI HARİTA İNDİRME (OFFLINE OSM) ----------
         Row(children: [
           Icon(Icons.offline_pin_rounded, color: c.accent, size: 26),
@@ -955,43 +1008,6 @@ class _MapSettingsState extends State<_MapSettings> {
               Expanded(child: Slider(value: s.mapZoom, min: 10, max: 19, divisions: 9, onChanged: (v) => s.update(() => s.mapZoom = v))),
               SizedBox(width: 40, child: Text(s.mapZoom.round().toString(), textAlign: TextAlign.end)),
             ]),
-          ),
-        ),
-        const Divider(height: 24),
-        const Text('Google Maps (Maps SDK for Android)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        FutureBuilder<MapSupport>(
-          future: MapSupport.check(),
-          builder: (context, snap) {
-            final m = snap.data;
-            if (m == null) return const LinearProgressIndicator();
-            return Container(
-              padding: const EdgeInsets.all(14),
-              decoration: c.card(color: c.surfaceAlt),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _status(m.hasPlayServices, m.hasPlayServices ? 'Google Play Hizmetleri yüklü' : 'Google Play Hizmetleri yok (Google Haritalar çalışmaz)'),
-                _status(m.hasKey, m.hasKey ? 'Maps API anahtarı derlemeye eklenmiş' : 'Maps API anahtarı bu derlemede yok'),
-                if (!m.googleReady)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text('Google seçili olsa bile bu durumda harita otomatik olarak OpenStreetMap ile gösterilir.', style: TextStyle(color: c.textMuted, fontSize: 13)),
-                  ),
-              ]),
-            );
-          },
-        ),
-        _row(
-          'Google harita türü',
-          DropdownButton<String>(
-            value: s.googleMapType,
-            underline: const SizedBox.shrink(),
-            items: const [
-              DropdownMenuItem(value: 'roadmap', child: Text('Yol haritası')),
-              DropdownMenuItem(value: 'satellite', child: Text('Uydu')),
-              DropdownMenuItem(value: 'hybrid', child: Text('Karma')),
-              DropdownMenuItem(value: 'terrain', child: Text('Arazi')),
-            ],
-            onChanged: (v) => v == null ? null : s.update(() => s.googleMapType = v),
           ),
         ),
       ]),

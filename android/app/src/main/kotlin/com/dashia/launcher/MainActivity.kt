@@ -171,6 +171,14 @@ class MainActivity : FlutterActivity() {
                     }
                     result.success(true)
                 }
+                "seekTo" -> {
+                    val pos = (call.argument<Number>("positionMs")?.toLong() ?: 0L).coerceAtLeast(0L)
+                    try {
+                        MediaListenerService.controller?.transportControls?.seekTo(pos)
+                        main.postDelayed({ MediaListenerService.requestPublish() }, 120)
+                    } catch (_: Exception) {}
+                    result.success(true)
+                }
                 "isListenerEnabled" -> result.success(isListenerEnabled())
                 "getDiagnostics" -> {
                     val diag = HashMap(MediaListenerService.diagnostics())

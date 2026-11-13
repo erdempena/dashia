@@ -27,6 +27,10 @@ class MediaService {
         hasSession: true,
         packageName: e['packageName'] as String?,
         albumArt: e['albumArt'] as Uint8List?,
+        positionMs: (e['positionMs'] as num?)?.toInt() ?? 0,
+        durationMs: (e['durationMs'] as num?)?.toInt() ?? 0,
+        updatedAtMs: DateTime.now().millisecondsSinceEpoch,
+        canSeek: e['canSeek'] == true,
       );
     }, onError: (Object e) => debugPrint('Medya akışı hatası: $e'));
     refreshAccess();
@@ -57,6 +61,30 @@ class MediaService {
   Future<void> togglePlayPause() => _call('togglePlayPause');
   Future<void> skipNext() => _call('skipNext');
   Future<void> skipPrevious() => _call('skipPrevious');
+
+  Future<void> seekTo(int positionMs) async {
+    final cur = current.value;
+    if (cur.hasSession && cur.durationMs > 0) {
+      current.value = MediaItem(
+        title: cur.title,
+        artist: cur.artist,
+        album: cur.album,
+        isPlaying: cur.isPlaying,
+        hasSession: cur.hasSession,
+        packageName: cur.packageName,
+        albumArt: cur.albumArt,
+        positionMs: positionMs.clamp(0, cur.durationMs),
+        durationMs: cur.durationMs,
+        updatedAtMs: DateTime.now().millisecondsSinceEpoch,
+        canSeek: cur.canSeek,
+      );
+    }
+    try {
+      await _method.invokeMethod('seekTo', {'positionMs': positionMs});
+    } catch (e) {
+      debugPrint('İlerletme başarısız: $e');
+    }
+  }
 
   /// Medya kaynakları için canlı teşhis verisi (oturumlar, broadcast yayınları, cihaz bilgisi).
   Future<Map<String, dynamic>> getDiagnostics() async {

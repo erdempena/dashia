@@ -14,7 +14,7 @@ class SpeedWidget extends StatelessWidget {
     final c = context.c;
     return RepaintBoundary(
       child: Container(
-        decoration: c.card(),
+        decoration: c.minimalist ? const BoxDecoration() : c.card(),
         padding: const EdgeInsets.all(12),
         child: ValueListenableBuilder<LocationData>(
           valueListenable: location.notifier,

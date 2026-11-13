@@ -19,7 +19,7 @@ extension DashWidgetX on DashWidget {
         DashWidget.clock => 'Dijital saat ve tarih',
         DashWidget.speed => 'GPS tabanlı anlık hız kadranı',
         DashWidget.media => 'Çalan parça ve oynatma kontrolleri',
-        DashWidget.map => 'Anlık konum (OpenStreetMap / Google)',
+        DashWidget.map => 'Anlık konum (OpenStreetMap)',
         DashWidget.none => 'Bu alanı gizle, diğerleri genişlesin',
       };
 }
@@ -51,6 +51,7 @@ class ShortcutConfig {
 
 class SettingsService extends ChangeNotifier {
   static const int maxShortcuts = 6;
+  static const int maxSideShortcuts = 4;
   static const String defaultOsmUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   late SharedPreferences _prefs;
@@ -58,7 +59,7 @@ class SettingsService extends ChangeNotifier {
   // Dil & Görünüm
   String language = 'tr'; // tr | en | de | fr | es | ru
   AppStrings get tr => AppStrings(language);
-  String uiStyle = 'classic'; // classic | material
+  String uiStyle = 'classic'; // classic | material | minimalist
   String themeMode = 'dark'; // dark | amoled | light
   int accent = 0xFF00D2FF;
   List<int> savedColors = [];
@@ -69,10 +70,16 @@ class SettingsService extends ChangeNotifier {
   String? customFontName;
   double fontScale = 1.0;
 
-  // Saat
+  // Saat & Üst Çubuk
   bool use24h = true;
   bool showSeconds = false;
   bool showDate = true;
+  bool clockShowSpeed = false;
+  bool showTopBar = false;
+  bool topBarShowGps = true;
+  bool topBarShowClock = true;
+  bool topBarShowDate = false;
+  bool topBarShowSpeed = false;
 
   // Hız
   String speedUnit = 'kmh'; // kmh | mph
@@ -91,6 +98,7 @@ class SettingsService extends ChangeNotifier {
 
   // Medya
   bool showAlbumArt = true;
+  double mediaControlScale = 1.15;
 
   // Düzen: [sol-üst, sol-alt, sağ-ana]
   List<DashWidget> slots = [DashWidget.clock, DashWidget.media, DashWidget.map];
@@ -99,12 +107,21 @@ class SettingsService extends ChangeNotifier {
   double barHeight = 78; // alt kısayol çubuğu yüksekliği
   bool showResizeHandles = true; // ana ekranda dokunmatik boyutlandırma çubuklarını göster/gizle
   List<ShortcutConfig> shortcuts = defaultShortcuts();
+  List<ShortcutConfig> sideShortcuts = defaultSideShortcuts();
+  bool sideShortcutsShowLabels = true;
 
   static List<ShortcutConfig> defaultShortcuts() => const [
         ShortcutConfig(id: 's1', label: 'Navigasyon', iconKey: 'navigation', package: 'com.google.android.apps.maps'),
         ShortcutConfig(id: 's2', label: 'Müzik', iconKey: 'music', package: 'com.spotify.music'),
         ShortcutConfig(id: 's3', label: 'Radyo', iconKey: 'radio', package: 'com.android.fmradio'),
         ShortcutConfig(id: 's4', label: 'Telefon', iconKey: 'phone', package: 'com.android.dialer'),
+      ];
+
+  static List<ShortcutConfig> defaultSideShortcuts() => const [
+        ShortcutConfig(id: 'side1', label: 'Navigasyon', iconKey: 'navigation', package: 'com.google.android.apps.maps'),
+        ShortcutConfig(id: 'side2', label: 'Müzik', iconKey: 'music', package: 'com.spotify.music'),
+        ShortcutConfig(id: 'side3', label: 'Radyo', iconKey: 'radio', package: 'com.android.fmradio'),
+        ShortcutConfig(id: 'side4', label: 'Telefon', iconKey: 'phone', package: 'com.android.dialer'),
       ];
 
   Future<void> load() async {
@@ -127,6 +144,12 @@ class SettingsService extends ChangeNotifier {
       use24h = j['use24h'] ?? use24h;
       showSeconds = j['showSeconds'] ?? showSeconds;
       showDate = j['showDate'] ?? showDate;
+      clockShowSpeed = j['clockShowSpeed'] ?? clockShowSpeed;
+      showTopBar = j['showTopBar'] ?? (uiStyle == 'minimalist');
+      topBarShowGps = j['topBarShowGps'] ?? topBarShowGps;
+      topBarShowClock = j['topBarShowClock'] ?? topBarShowClock;
+      topBarShowDate = j['topBarShowDate'] ?? topBarShowDate;
+      topBarShowSpeed = j['topBarShowSpeed'] ?? topBarShowSpeed;
       speedUnit = j['speedUnit'] ?? speedUnit;
       maxSpeed = j['maxSpeed'] ?? maxSpeed;
       mapProvider = j['mapProvider'] ?? mapProvider;
@@ -139,6 +162,7 @@ class SettingsService extends ChangeNotifier {
       mapRotate = j['mapRotate'] ?? mapRotate;
       mapShowSpeed = j['mapShowSpeed'] ?? mapShowSpeed;
       showAlbumArt = j['showAlbumArt'] ?? showAlbumArt;
+      mediaControlScale = ((j['mediaControlScale'] ?? mediaControlScale) as num).toDouble().clamp(0.8, 1.5);
       leftFrac = ((j['leftFrac'] ?? leftFrac) as num).toDouble().clamp(0.2, 0.6);
       leftSplit = ((j['leftSplit'] ?? leftSplit) as num).toDouble().clamp(0.15, 0.75);
       barHeight = ((j['barHeight'] ?? barHeight) as num).toDouble().clamp(60, 120);
@@ -150,6 +174,9 @@ class SettingsService extends ChangeNotifier {
       }
       final sc = (j['shortcuts'] as List?)?.map((e) => ShortcutConfig.fromJson(Map<String, dynamic>.from(e as Map))).toList();
       if (sc != null) shortcuts = sc.take(maxShortcuts).toList();
+      final ssc = (j['sideShortcuts'] as List?)?.map((e) => ShortcutConfig.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      if (ssc != null) sideShortcuts = ssc.take(maxSideShortcuts).toList();
+      sideShortcutsShowLabels = j['sideShortcutsShowLabels'] as bool? ?? sideShortcutsShowLabels;
 
       if (customFontPath != null) {
         final ok = await AppFont.loadCustomFont(customFontPath);
@@ -177,6 +204,12 @@ class SettingsService extends ChangeNotifier {
         'use24h': use24h,
         'showSeconds': showSeconds,
         'showDate': showDate,
+        'clockShowSpeed': clockShowSpeed,
+        'showTopBar': showTopBar,
+        'topBarShowGps': topBarShowGps,
+        'topBarShowClock': topBarShowClock,
+        'topBarShowDate': topBarShowDate,
+        'topBarShowSpeed': topBarShowSpeed,
         'speedUnit': speedUnit,
         'maxSpeed': maxSpeed,
         'mapProvider': mapProvider,
@@ -188,12 +221,15 @@ class SettingsService extends ChangeNotifier {
         'mapRotate': mapRotate,
         'mapShowSpeed': mapShowSpeed,
         'showAlbumArt': showAlbumArt,
+        'mediaControlScale': mediaControlScale,
         'slots': slots.map((e) => e.name).toList(),
         'leftFrac': leftFrac,
         'leftSplit': leftSplit,
         'barHeight': barHeight,
         'showResizeHandles': showResizeHandles,
         'shortcuts': shortcuts.map((e) => e.toJson()).toList(),
+        'sideShortcuts': sideShortcuts.map((e) => e.toJson()).toList(),
+        'sideShortcutsShowLabels': sideShortcutsShowLabels,
       };
 
   /// Değişikliği uygular, kaydeder ve dinleyenleri bilgilendirir.
@@ -255,6 +291,31 @@ class SettingsService extends ChangeNotifier {
         barHeight = 78;
       });
   void resetShortcuts() => update(() => shortcuts = defaultShortcuts());
+  void resetSideShortcuts() => update(() => sideShortcuts = defaultSideShortcuts());
+
+  void saveSideShortcut(ShortcutConfig s) {
+    update(() {
+      final i = sideShortcuts.indexWhere((e) => e.id == s.id);
+      final list = List<ShortcutConfig>.from(sideShortcuts);
+      if (i >= 0) {
+        list[i] = s;
+      } else if (list.length < maxSideShortcuts) {
+        list.add(s);
+      }
+      sideShortcuts = list;
+    });
+  }
+
+  void removeSideShortcut(String id) => update(() => sideShortcuts = sideShortcuts.where((e) => e.id != id).toList());
+
+  void moveSideShortcut(int from, int to) {
+    update(() {
+      final list = List<ShortcutConfig>.from(sideShortcuts);
+      final item = list.removeAt(from);
+      list.insert(to.clamp(0, list.length), item);
+      sideShortcuts = list;
+    });
+  }
 
   void saveCustomColor(int color) {
     final normalized = 0xFF000000 | (color & 0xFFFFFF);

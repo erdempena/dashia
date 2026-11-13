@@ -12,7 +12,17 @@ class QuickAppsBar extends StatelessWidget {
   final AppLauncherService apps;
   final VoidCallback onOpenDrawer;
   final VoidCallback onOpenSettings;
-  const QuickAppsBar({super.key, required this.settings, required this.apps, required this.onOpenDrawer, required this.onOpenSettings});
+  final VoidCallback? onToggleSideMenu;
+  final bool sideMenuOpen;
+  const QuickAppsBar({
+    super.key,
+    required this.settings,
+    required this.apps,
+    required this.onOpenDrawer,
+    required this.onOpenSettings,
+    this.onToggleSideMenu,
+    this.sideMenuOpen = false,
+  });
 
   Future<void> _launch(BuildContext context, ShortcutConfig s) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -33,6 +43,111 @@ class QuickAppsBar extends StatelessWidget {
     final c = context.c;
     final tr = settings.tr;
     final list = settings.shortcuts;
+
+    if (c.minimalist) {
+      final dockH = (settings.barHeight * 0.80).clamp(52.0, 88.0);
+      final iconSz = (dockH * 0.46).clamp(22.0, 36.0);
+      return GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onLongPress: list.length < SettingsService.maxShortcuts
+            ? () => showShortcutEditor(context, settings: settings, apps: apps)
+            : null,
+        child: Container(
+          height: dockH,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: c.isLight ? Colors.white : const Color(0xFF090B0D),
+            borderRadius: BorderRadius.circular(c.radius),
+            border: Border.all(color: c.border),
+          ),
+          child: Row(
+            children: [
+              // Sol Köşe: Sol Açılır Dikey Kart Butonu (Basınca sol dikey kısayol kartını açar/kapatır)
+              Material(
+                color: sideMenuOpen ? c.accent.withValues(alpha: 0.22) : c.text.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: onToggleSideMenu ?? onOpenDrawer,
+                  onLongPress: list.length < SettingsService.maxShortcuts
+                      ? () => showShortcutEditor(context, settings: settings, apps: apps)
+                      : null,
+                  child: SizedBox(
+                    width: dockH * 0.78,
+                    height: dockH * 0.68,
+                    child: Icon(
+                      Icons.home_rounded,
+                      size: iconSz * 0.9,
+                      color: sideMenuOpen ? c.accent : c.text.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
+              ),
+              // Orta: Çerçevesiz, Yazısız Sade Kısayol İkonları
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (var i = 0; i < list.length; i++)
+                      Tooltip(
+                        message: list[i].label,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => _launch(context, list[i]),
+                          onLongPress: () => showShortcutEditor(context, settings: settings, apps: apps, existing: list[i]),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            child: ShortcutIcon(
+                              apps: apps,
+                              shortcut: list[i],
+                              size: iconSz,
+                              color: i == 0 ? c.accent : c.text.withValues(alpha: 0.82),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Sağ Köşe: Önce Uygulamalar (⊞), en sağda Ayarlar (Klasik ve Material temalarıyla aynı sıra)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Material(
+                    color: c.text.withValues(alpha: 0.11),
+                    borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: onOpenDrawer,
+                      child: SizedBox(
+                        width: dockH * 0.84,
+                        height: dockH * 0.68,
+                        child: Icon(Icons.grid_view_rounded, size: iconSz * 0.9, color: c.text),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Material(
+                    color: c.text.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: onOpenSettings,
+                      child: SizedBox(
+                        width: dockH * 0.78,
+                        height: dockH * 0.68,
+                        child: Icon(Icons.tune_rounded, size: iconSz * 0.88, color: c.text.withValues(alpha: 0.85)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: settings.barHeight,
       child: LayoutBuilder(builder: (context, box) {

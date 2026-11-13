@@ -160,6 +160,7 @@ class _SlotDialog extends StatelessWidget {
           _switch(t.format24h, s.use24h, (v) => s.use24h = v),
           _switch(t.showSeconds, s.showSeconds, (v) => s.showSeconds = v),
           _switch(t.showDate, s.showDate, (v) => s.showDate = v),
+          _switch(t.clockShowSpeedTitle, s.clockShowSpeed, (v) => s.clockShowSpeed = v),
         ]);
       case DashWidget.speed:
         return Align(
@@ -171,15 +172,19 @@ class _SlotDialog extends StatelessWidget {
           ),
         );
       case DashWidget.media:
-        return _switch(t.showAlbumArt, s.showAlbumArt, (v) => s.showAlbumArt = v);
+        return Column(children: [
+          _switch(t.showAlbumArt, s.showAlbumArt, (v) => s.showAlbumArt = v),
+          _slider(
+            t.mediaControlScaleTitle,
+            s.mediaControlScale,
+            0.85,
+            1.50,
+            (v) => s.update(() => s.mediaControlScale = double.parse(v.toStringAsFixed(2))),
+            '%${(s.mediaControlScale * 100).round()}',
+          ),
+        ]);
       case DashWidget.map:
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SegmentedButton<String>(
-            segments: const [ButtonSegment(value: 'osm', label: Text('OpenStreetMap')), ButtonSegment(value: 'google', label: Text('Google Maps'))],
-            selected: {s.mapProvider},
-            onSelectionChanged: (v) => s.update(() => s.mapProvider = v.first),
-          ),
-          const SizedBox(height: 10),
           Text(t.osmThemeTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           SegmentedButton<String>(

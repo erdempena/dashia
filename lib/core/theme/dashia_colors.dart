@@ -8,6 +8,8 @@ class DashiaColors extends ThemeExtension<DashiaColors> {
   final double radius;
   /// true: Material 3 (tonal, çerçevesiz) stil; false: klasik düz çerçeveli stil.
   final bool material;
+  /// true: Çerçevesiz minimalist kokpit stili.
+  final bool minimalist;
   final ColorScheme? scheme;
 
   const DashiaColors({
@@ -21,6 +23,7 @@ class DashiaColors extends ThemeExtension<DashiaColors> {
     required this.onAccent,
     required this.radius,
     this.material = false,
+    this.minimalist = false,
     this.scheme,
   });
 
@@ -29,6 +32,33 @@ class DashiaColors extends ThemeExtension<DashiaColors> {
     final amoled = s.themeMode == 'amoled';
     final light = s.themeMode == 'light';
     final onAccent = accent.computeLuminance() > 0.45 ? const Color(0xFF0B0F14) : Colors.white;
+
+    if (s.uiStyle == 'minimalist') {
+      final background = amoled
+          ? Colors.black
+          : (light ? const Color(0xFFF3F5F8) : const Color(0xFF0F1114));
+      final surface = amoled
+          ? const Color(0xFF0A0C0E)
+          : (light ? Colors.white : const Color(0xFF15181D));
+      final surfaceAlt = amoled
+          ? const Color(0xFF16191E)
+          : (light ? const Color(0xFFE5E9F0) : const Color(0xFF1E2229));
+      final border = light
+          ? const Color(0xFFD8DEE9)
+          : Colors.white.withValues(alpha: 0.07);
+      return DashiaColors(
+        background: background,
+        surface: surface,
+        surfaceAlt: surfaceAlt,
+        border: border,
+        text: light ? const Color(0xFF0F172A) : Colors.white,
+        textMuted: light ? const Color(0xFF475569) : const Color(0xFF94A3B8),
+        accent: accent,
+        onAccent: onAccent,
+        radius: s.radius,
+        minimalist: true,
+      );
+    }
 
     if (s.uiStyle == 'material') {
       final baseScheme = ColorScheme.fromSeed(

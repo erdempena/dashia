@@ -24,9 +24,10 @@
   - **Dahili Çevrimdışı Bölge İndirici**: SIM kartı olmayan multimedya cihazlarında %100 internetsiz navigasyon için şehir/bölge haritalarını doğrudan cihaz hafızasına indirin.
 - **🎵 Evrensel Medya Oturumu Kontrolcüsü & FYT/SYU Bluetooth Köprüsü**
   - Spotify, YouTube Music, Poweramp, AIMP, Bluetooth A2DP müzik akışı (FYT/SYU `com.syu.ms` / `com.syu.bt` araç multimedya üniteleri için yerel IPC köprüsü dahil) ve yerleşik FM Radyo uygulamalarını destekleyen yerel `NotificationListenerService` + `MediaSessionManager` köprüsü.
-  - Bluetooth müzik bağlantısında özel **Plak & Bluetooth** albüm kapağı simgesi.
-- **🎨 Tema Motoru, Material You ve Özel Yazı Tipleri**
-  - Hazır temalar (*Obsidian Red*, *Material You*, *Carbon Blue*, *Cockpit Amber*, *Emerald*, *Daylight*) ve tüm temalarla (Material You dahil) uyumlu **Özel HEX Renk Seçici ve Renk Kaydetme (`Kaydedilen Renkler`)**.
+  - Canlı ilerleme çubuğu, dokunarak şarkı sarma (`seekTo`), boyutlandırılabilir medya kontrol tuşları ve Bluetooth müzik bağlantısında özel **Plak & Bluetooth** albüm kapağı simgesi.
+- **🎨 3 Arayüz Stili (Klasik, Material You, Minimalist) & Tema Motoru**
+  - **Klasik**, **Material You** ve çerçevesiz kokpit görünümü sunan **Minimalist** arayüz stilleri, özelleştirilebilir üst durum şeridi ve sol açılır dikey kısayol kartı (maks. 4 uygulama, isim gizleme / sadece logo seçeneği).
+  - Hazır temalar (*Obsidian Red*, *Material You*, *Carbon Blue*, *Cockpit Amber*, *Emerald*, *Daylight*) ve tüm temalarla uyumlu **Özel HEX Renk Seçici ve Renk Kaydetme (`Kaydedilen Renkler`)**.
   - 6 dahili kokpit fontu + cihaz hafızasından **Özel `.ttf` / `.otf` Font Yükleyici**.
 - **🚀 Özelleştirilebilir Hızlı Dock (0–6 Kısayol)**
   - Alt barı 0 ile 6 uygulama arasında yapılandırın; özel isimler, dahili vektörel ikonlar veya **galeriden özel görseller (`.png` / `.jpg`)** atayın.
@@ -38,7 +39,7 @@
 ### 1. Araç Multimedya Cihazına Kurulum (APK)
 Uygulamayı kod derlemeden doğrudan aracınızın multimedya ekranına veya Android tabletinize kurmak için:
 
-1. **APK İndirin:** Sağ taraftaki [**Releases**](../../releases) bölümünden en güncel `Dashia-v1.2.0.apk` dosyasını indirin ve USB bellek veya tarayıcı ile multimedya cihazınıza aktarıp kurun.
+1. **APK İndirin:** Sağ taraftaki [**Releases**](../../releases) bölümünden en güncel `Dashia-v1.3.0.apk` dosyasını indirin ve USB bellek veya tarayıcı ile multimedya cihazınıza aktarıp kurun.
 2. **Konum İzni (GPS & Harita):** İlk açılışta hız göstergesi ve canlı haritanın çalışması için konum iznini **"Her zaman / Uygulama kullanılırken izin ver"** olarak onaylayın.
 3. **Müzik & Medya Kontrolü İzni:** Spotify, YouTube Music, Bluetooth müzik ve Radyo bilgilerini (şarkı adı ve albüm kapağı) okumak için **Dashia Ayarları → Medya → Bildirim Erişimi Ver** butonuna dokunup listeden **Dashia**'yı aktif edin.
 4. **Varsayılan Ana Ekran (Home Launcher) Yapma:** Aracın kontağı açıldığında veya cihazdaki **Home (Ev)** tuşuna basıldığında doğrudan Dashia'nın açılması için **Dashia Ayarları → Sistem → Varsayılan Ana Ekran** seçeneğinden varsayılan başlatıcı olarak **Dashia**'yı seçin.
@@ -63,8 +64,9 @@ Uygulamayı kod derlemeden doğrudan aracınızın multimedya ekranına veya And
   - **Built-in Offline Region Downloader**: Download city/region tiles directly to device storage for 100% offline navigation on head units without SIM cards.
 - **🎵 Universal Media Session Controller & FYT/SYU Bluetooth Bridge**
   - Native `NotificationListenerService` + `MediaSessionManager` bridge supporting Spotify, YouTube Music, Poweramp, AIMP, Bluetooth A2DP streaming (including native `com.syu.ms` / `com.syu.bt` IPC bridge for FYT/SYU automotive head units), and stock FM Radio apps.
-  - Custom **Vinyl & Bluetooth** album cover icon during Bluetooth audio playback.
-- **🎨 Theme Engine, Material You & Custom Fonts**
+  - Real-time interactive seek/progress bar, resizable playback control buttons, and custom **Vinyl & Bluetooth** album cover icon during Bluetooth audio playback.
+- **🎨 3 UI Styles (Classic, Material You, Minimalist) & Theme Engine**
+  - **Classic**, **Material You**, and **Minimalist** borderless cockpit UI styles with a customizable top status strip and an animated left slide-out vertical shortcuts card (up to 4 apps, with logo-only mode).
   - Presets (*Obsidian Red*, *Material You*, *Carbon Blue*, *Cockpit Amber*, *Emerald*, *Daylight*) plus a full **Custom HEX Color Picker & Saved Colors Palette** (works across all themes including Material You).
   - 6 built-in cockpit typefaces + **Custom `.ttf` / `.otf` Font Loader** from device storage.
 - **🚀 Customizable Quick Dock (0–6 Shortcuts)**
@@ -77,7 +79,7 @@ Uygulamayı kod derlemeden doğrudan aracınızın multimedya ekranına veya And
 ### 1. Direct APK Installation (For Car Head Units & Tablets)
 To install Dashia directly on your vehicle's multimedia screen or Android tablet without building from source:
 
-1. **Download APK:** Download the latest `Dashia-v1.2.0.apk` from the [**Releases**](../../releases) section and install it via USB drive or browser.
+1. **Download APK:** Download the latest `Dashia-v1.3.0.apk` from the [**Releases**](../../releases) section and install it via USB drive or browser.
 2. **Location Permission (GPS & Map):** On first launch, grant Location Permission (**"Allow all the time"** or **"While using the app"**) for the GPS speedometer and live map to function.
 3. **Media Control Permission:** To read track info and album art from Spotify, YouTube Music, Bluetooth audio, and FM Radio, go to **Dashia Settings → Media → Grant Notification Access** and enable **Dashia**.
 4. **Set as Default Home Launcher:** To launch Dashia automatically when you turn the ignition on or press the **Home** button, go to **Dashia Settings → System → Default Home Launcher** and select **Dashia**.

@@ -54,7 +54,7 @@ class AppStrings {
         'clock' => _t({'tr': 'Dijital saat ve tarih', 'en': 'Digital clock and date', 'de': 'Digitaluhr und Datum', 'fr': 'Horloge numérique et date', 'es': 'Reloj digital y fecha', 'ru': 'Цифровые часы и дата'}),
         'speed' => _t({'tr': 'GPS tabanlı anlık hız kadranı', 'en': 'GPS live speedometer gauge', 'de': 'GPS-Geschwindigkeitsanzeige', 'fr': 'Vitesse GPS en temps réel', 'es': 'Velocímetro GPS en tiempo real', 'ru': 'GPS-спидометр'}),
         'media' => _t({'tr': 'Çalan parça ve oynatma kontrolleri', 'en': 'Now playing and playback controls', 'de': 'Wiedergabe und Steuerung', 'fr': 'Lecture en cours et commandes', 'es': 'Reproducción y controles', 'ru': 'Текущий трек и управление'}),
-        'map' => _t({'tr': 'Anlık konum (OpenStreetMap / Google)', 'en': 'Live location (OpenStreetMap / Google)', 'de': 'Live-Standort (OpenStreetMap / Google)', 'fr': 'Position en direct (OSM / Google)', 'es': 'Ubicación en vivo (OSM / Google)', 'ru': 'Геолокация (OSM / Google)'}),
+        'map' => _t({'tr': 'Anlık konum (OpenStreetMap)', 'en': 'Live location (OpenStreetMap)', 'de': 'Live-Standort (OpenStreetMap)', 'fr': 'Position en direct (OpenStreetMap)', 'es': 'Ubicación en vivo (OpenStreetMap)', 'ru': 'Геолокация (OpenStreetMap)'}),
         _ => _t({'tr': 'Bu alanı gizle, diğerleri genişlesin', 'en': 'Hide this slot and expand others', 'de': 'Bereich ausblenden', 'fr': 'Masquer cet emplacement', 'es': 'Ocultar este espacio', 'ru': 'Скрыть эту область'}),
       };
 
@@ -80,14 +80,15 @@ class AppStrings {
   // --- Görünüm Sekmesi ---
   String get uiStyleTitle => _t({'tr': 'Arayüz stili', 'en': 'UI Style', 'de': 'Oberflächenstil', 'fr': 'Style d\'interface', 'es': 'Estilo de interfaz', 'ru': 'Стиль интерфейса'});
   String get uiStyleSub => _t({
-        'tr': 'Material: Material 3 tonal renkler, çerçevesiz yuvarlak kartlar; renkler vurgu renginden üretilir.',
-        'en': 'Material: Material 3 tonal surfaces and borderless rounded cards generated from accent color.',
-        'de': 'Material: Material 3 Tonal-Design und rahmenlose abgerundete Karten.',
-        'fr': 'Material : surfaces tonales Material 3 et cartes arrondies sans bordure.',
-        'es': 'Material: colores tonales Material 3 y tarjetas redondeadas sin bordes.',
-        'ru': 'Material: тональные цвета Material 3 и карточки без рамок.',
+        'tr': 'Kendinize uygun temayı seçin.',
+        'en': 'Choose the theme that best fits your screen and style.',
+        'de': 'Wählen Sie das passende Thema für Ihren Bildschirm.',
+        'fr': 'Choisissez le thème qui vous convient le mieux.',
+        'es': 'Elige el tema que mejor se adapte a ti.',
+        'ru': 'Выберите тему, которая подходит вам лучше всего.',
       });
   String get styleClassic => _t({'tr': 'Klasik', 'en': 'Classic', 'de': 'Klassisch', 'fr': 'Classique', 'es': 'Clásico', 'ru': 'Классика'});
+  String get styleMinimalist => _t({'tr': 'Minimalist', 'en': 'Minimalist', 'de': 'Minimalistisch', 'fr': 'Minimaliste', 'es': 'Minimalista', 'ru': 'Минималистичный'});
   String get themeTitle => _t({'tr': 'Tema', 'en': 'Theme', 'de': 'Thema', 'fr': 'Thème', 'es': 'Tema', 'ru': 'Тема'});
   String get themeDark => _t({'tr': 'Koyu', 'en': 'Dark', 'de': 'Dunkel', 'fr': 'Sombre', 'es': 'Oscuro', 'ru': 'Тёмная'});
   String get themeLight => _t({'tr': 'Açık', 'en': 'Light', 'de': 'Hell', 'fr': 'Clair', 'es': 'Claro', 'ru': 'Светлая'});
@@ -106,11 +107,21 @@ class AppStrings {
   String get format24h => _t({'tr': '24 saat formatı', 'en': '24-hour format', 'de': '24-Stunden-Format', 'fr': 'Format 24 heures', 'es': 'Formato de 24 horas', 'ru': '24-часовой формат'});
   String get showSeconds => _t({'tr': 'Saniyeyi göster', 'en': 'Show seconds', 'de': 'Sekunden anzeigen', 'fr': 'Afficher les secondes', 'es': 'Mostrar segundos', 'ru': 'Показывать секунды'});
   String get showDate => _t({'tr': 'Tarihi göster', 'en': 'Show date', 'de': 'Datum anzeigen', 'fr': 'Afficher la date', 'es': 'Mostrar fecha', 'ru': 'Показывать дату'});
+  String get clockShowSpeedTitle => _t({'tr': 'Saat kutusunda anlık hızı göster', 'en': 'Show live speed inside Clock widget', 'de': 'Geschwindigkeit im Uhr-Widget anzeigen', 'fr': 'Afficher la vitesse dans l\'horloge', 'es': 'Mostrar velocidad junto al reloj', 'ru': 'Показывать скорость рядом с часами'});
+  String get clockShowSpeedSub => _t({'tr': 'Haritada veya ayrı kadranla hız gösteriyorsanız birden fazla hız olmaması için kapalı tutabilirsiniz.', 'en': 'Keep disabled if you already use the map speed chip or speedometer widget.', 'de': 'Deaktiviert lassen, wenn bereits Tachometer oder Karten-Geschwindigkeit genutzt wird.', 'fr': 'Désactivez si vous utilisez déjà le compteur ou la vitesse sur la carte.', 'es': 'Desactívalo si ya muestras la velocidad en el mapa o velocímetro.', 'ru': 'Отключите, если скорость уже отображается на карте или спидометре.'});
+  String get topBarSectionTitle => _t({'tr': 'Üst Durum Çubuğu (Kokpit Şeridi)', 'en': 'Top Status Bar (Cockpit Strip)', 'de': 'Obere Statusleiste', 'fr': 'Barre d\'état supérieure', 'es': 'Barra de estado superior', 'ru': 'Верхняя панель состояния'});
+  String get showTopBarTitle => _t({'tr': 'Üst durum çubuğunu göster', 'en': 'Show top status bar', 'de': 'Obere Statusleiste anzeigen', 'fr': 'Afficher la barre supérieure', 'es': 'Mostrar barra superior', 'ru': 'Показывать верхнюю панель'});
+  String get showTopBarSub => _t({'tr': 'Ekranın en üstünde ince durum şeridi gösterir (Minimalist temada önerilir).', 'en': 'Displays a sleek status strip at the top of the screen (recommended for Minimalist theme).', 'de': 'Zeigt eine schlanke Statusleiste am oberen Bildschirmrand.', 'fr': 'Affiche une fine barre d\'état en haut de l\'écran.', 'es': 'Muestra una barra de estado fina en la parte superior.', 'ru': 'Отображает тонкую строку состояния вверху экрана.'});
+  String get topBarShowGpsTitle => _t({'tr': 'Üst çubukta GPS durumunu göster', 'en': 'Show GPS status in top bar', 'de': 'GPS-Status oben anzeigen', 'fr': 'Afficher l\'état GPS en haut', 'es': 'Mostrar estado GPS arriba', 'ru': 'Статус GPS в верхней панели'});
+  String get topBarShowClockTitle => _t({'tr': 'Üst çubukta saati göster', 'en': 'Show clock in top bar', 'de': 'Uhrzeit oben anzeigen', 'fr': 'Afficher l\'heure en haut', 'es': 'Mostrar hora arriba', 'ru': 'Часы в верхней панели'});
+  String get topBarShowDateTitle => _t({'tr': 'Üst çubukta tarihi göster', 'en': 'Show date in top bar', 'de': 'Datum oben anzeigen', 'fr': 'Afficher la date en haut', 'es': 'Mostrar fecha arriba', 'ru': 'Дата в верхней панели'});
+  String get topBarShowSpeedTitle => _t({'tr': 'Üst çubukta anlık hızı göster', 'en': 'Show live speed in top bar', 'de': 'Geschwindigkeit oben anzeigen', 'fr': 'Afficher la vitesse en haut', 'es': 'Mostrar velocidad arriba', 'ru': 'Скорость в верхней панели'});
   String get speedUnit => _t({'tr': 'Hız birimi', 'en': 'Speed unit', 'de': 'Geschwindigkeitseinheit', 'fr': 'Unité de vitesse', 'es': 'Unidad de velocidad', 'ru': 'Единица скорости'});
   String get maxDialSpeed => _t({'tr': 'Kadran maksimum hızı', 'en': 'Max dial speed', 'de': 'Max. Tachogeschwindigkeit', 'fr': 'Vitesse max du cadran', 'es': 'Velocidad máx. del dial', 'ru': 'Макс. скорость шкалы'});
 
   // --- Medya ---
   String get showAlbumArt => _t({'tr': 'Albüm kapağını göster', 'en': 'Show album cover', 'de': 'Albumcover anzeigen', 'fr': 'Afficher la pochette', 'es': 'Mostrar carátula', 'ru': 'Показывать обложку'});
+  String get mediaControlScaleTitle => _t({'tr': 'Müzik kontrol tuşları boyutu', 'en': 'Media control buttons size', 'de': 'Größe der Medientasten', 'fr': 'Taille des boutons média', 'es': 'Tamaño de botones multimedia', 'ru': 'Размер кнопок управления медиа'});
   String get notifAccess => _t({'tr': 'Bildirim erişimi', 'en': 'Notification access', 'de': 'Benachrichtigungszugriff', 'fr': 'Accès aux notifications', 'es': 'Acceso a notificaciones', 'ru': 'Доступ к уведомлениям'});
   String get notifGrantedSub => _t({
         'tr': 'Verildi. Spotify, YouTube Music, radyo vb. çalan parça okunabilir.',
@@ -157,6 +168,18 @@ class AppStrings {
   String get shortcutsTitle => _t({'tr': 'Kısayollar', 'en': 'Shortcuts', 'de': 'Kürzel', 'fr': 'Raccourcis', 'es': 'Accesos directos', 'ru': 'Ярлыки'});
   String get addShortcutBtn => _t({'tr': 'Kısayol ekle', 'en': 'Add shortcut', 'de': 'Hinzufügen', 'fr': 'Ajouter', 'es': 'Añadir acceso', 'ru': 'Добавить ярлык'});
   String get resetShortcutsBtn => _t({'tr': 'Kısayolları sıfırla', 'en': 'Reset shortcuts', 'de': 'Kürzel zurücksetzen', 'fr': 'Réinitialiser les raccourcis', 'es': 'Restablecer accesos', 'ru': 'Сбросить ярлыки'});
+  String get sideShortcutsTitle => _t({'tr': 'Sol Açılır Panel Kısayolları', 'en': 'Left Slide-Out Shortcuts', 'de': 'Linkes Seitenpanel-Kürzel', 'fr': 'Raccourcis du panneau gauche', 'es': 'Accesos del panel izquierdo', 'ru': 'Ярлыки левой панели'});
+  String get sideShortcutsSub => _t({
+        'tr': 'Minimalist temada sol alttaki ana ekran tuşuna basınca açılan dikey karttaki uygulamalar (maksimum 4). Üzerine basılı tutarak düzenleyebilirsiniz.',
+        'en': 'Apps in the vertical slide-out card opened by the bottom-left home button in Minimalist theme (max 4). Long-press to edit.',
+        'de': 'Apps in der linken ausklappbaren Karte im Minimalistisch-Thema (max. 4). Gedrückt halten zum Bearbeiten.',
+        'fr': 'Applications dans la carte verticale gauche du thème Minimaliste (max 4). Appui long pour modifier.',
+        'es': 'Aplicaciones en la tarjeta vertical izquierda del tema Minimalista (máx. 4). Mantén pulsado para editar.',
+        'ru': 'Приложения в левой выдвижной карточке минималистичной темы (макс. 4). Удерживайте для изменения.',
+      });
+  String get sideShortcutsShowLabelsTitle => _t({'tr': 'Sol panelde uygulama isimlerini göster', 'en': 'Show app labels in left panel', 'de': 'App-Namen im linken Panel anzeigen', 'fr': 'Afficher les noms dans le panneau gauche', 'es': 'Mostrar nombres en el panel izquierdo', 'ru': 'Показывать названия в левой панели'});
+  String get sideShortcutsShowLabelsSub => _t({'tr': 'Kapatıldığında sol açılır kartta yalnızca uygulama logoları görünür.', 'en': 'When disabled, only app logos are shown in the slide-out card.', 'de': 'Wenn deaktiviert, werden nur App-Symbole angezeigt.', 'fr': 'Si désactivé, seuls les logos sont affichés.', 'es': 'Al desactivarlo, solo se muestran los iconos.', 'ru': 'Если отключено, отображаются только значки.'});
+  String get resetSideShortcutsBtn => _t({'tr': 'Sol panel kısayollarını sıfırla', 'en': 'Reset left panel shortcuts', 'de': 'Linke Kürzel zurücksetzen', 'fr': 'Réinitialiser le panneau gauche', 'es': 'Restablecer panel izquierdo', 'ru': 'Сбросить левую панель'});
 
   // --- Sistem Sekmesi ---
   String get languageTitle => _t({'tr': 'Uygulama dili', 'en': 'App language', 'de': 'App-Sprache', 'fr': 'Langue de l\'application', 'es': 'Idioma de la aplicación', 'ru': 'Язык приложения'});

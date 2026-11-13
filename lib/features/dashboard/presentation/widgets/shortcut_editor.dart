@@ -12,10 +12,16 @@ Future<void> showShortcutEditor(
   required SettingsService settings,
   required AppLauncherService apps,
   ShortcutConfig? existing,
+  bool isSidePanel = false,
 }) {
   return showDialog<void>(
     context: context,
-    builder: (_) => _ShortcutEditor(settings: settings, apps: apps, existing: existing),
+    builder: (_) => _ShortcutEditor(
+      settings: settings,
+      apps: apps,
+      existing: existing,
+      isSidePanel: isSidePanel,
+    ),
   );
 }
 
@@ -23,7 +29,13 @@ class _ShortcutEditor extends StatefulWidget {
   final SettingsService settings;
   final AppLauncherService apps;
   final ShortcutConfig? existing;
-  const _ShortcutEditor({required this.settings, required this.apps, this.existing});
+  final bool isSidePanel;
+  const _ShortcutEditor({
+    required this.settings,
+    required this.apps,
+    this.existing,
+    this.isSidePanel = false,
+  });
 
   @override
   State<_ShortcutEditor> createState() => _ShortcutEditorState();
@@ -73,7 +85,11 @@ class _ShortcutEditorState extends State<_ShortcutEditor> with SingleTickerProvi
   }
 
   void _save() {
-    widget.settings.saveShortcut(_draft);
+    if (widget.isSidePanel) {
+      widget.settings.saveSideShortcut(_draft);
+    } else {
+      widget.settings.saveShortcut(_draft);
+    }
     Navigator.pop(context);
   }
 
@@ -110,7 +126,11 @@ class _ShortcutEditorState extends State<_ShortcutEditor> with SingleTickerProvi
                   tooltip: 'Kısayolu sil',
                   icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
                   onPressed: () {
-                    widget.settings.removeShortcut(widget.existing!.id);
+                    if (widget.isSidePanel) {
+                      widget.settings.removeSideShortcut(widget.existing!.id);
+                    } else {
+                      widget.settings.removeShortcut(widget.existing!.id);
+                    }
                     Navigator.pop(context);
                   },
                 ),
@@ -186,15 +206,30 @@ class _ShortcutEditorState extends State<_ShortcutEditor> with SingleTickerProvi
                   // İSİM
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: TextField(
-                        controller: _label,
-                        maxLength: 14,
-                        style: const TextStyle(fontSize: 20),
-                        decoration: const InputDecoration(labelText: 'Kısayol adı'),
-                        onChanged: (_) => setState(() {}),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextField(
+                          controller: _label,
+                          maxLength: 14,
+                          style: const TextStyle(fontSize: 20),
+                          decoration: const InputDecoration(labelText: 'Kısayol adı'),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                        if (widget.isSidePanel) ...[
+                          const SizedBox(height: 12),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(widget.settings.tr.sideShortcutsShowLabelsTitle),
+                            subtitle: Text(widget.settings.tr.sideShortcutsShowLabelsSub),
+                            value: widget.settings.sideShortcutsShowLabels,
+                            onChanged: (v) {
+                              setState(() {});
+                              widget.settings.update(() => widget.settings.sideShortcutsShowLabels = v);
+                            },
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   // UYGULAMA

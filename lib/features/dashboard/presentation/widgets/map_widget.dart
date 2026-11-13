@@ -1,24 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' as g;
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/dashia_colors.dart';
 import '../../../apps/services/app_launcher_service.dart';
 import '../../../location/location_service.dart';
-import '../../../map/map_support.dart';
 import '../../../map/offline_map_service.dart';
 import '../../../settings/settings_service.dart';
-
-const _googleDarkStyle = '[{"elementType":"geometry","stylers":[{"color":"#242f3e"}]},'
-    '{"elementType":"labels.text.fill","stylers":[{"color":"#9aa4b2"}]},'
-    '{"elementType":"labels.text.stroke","stylers":[{"color":"#242f3e"}]},'
-    '{"featureType":"road","elementType":"geometry","stylers":[{"color":"#3a4555"}]},'
-    '{"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#212a37"}]},'
-    '{"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#7a6a55"}]},'
-    '{"featureType":"water","elementType":"geometry","stylers":[{"color":"#17263c"}]},'
-    '{"featureType":"poi","stylers":[{"visibility":"off"}]},'
-    '{"featureType":"transit","stylers":[{"visibility":"off"}]}]';
 
 /// Yumuşak geçişli (60 FPS interpolasyonlu) anlık konum durumu.
 class _SmoothLoc {
@@ -28,7 +16,7 @@ class _SmoothLoc {
   const _SmoothLoc({this.lat, this.lng, this.heading = 0});
 }
 
-/// OpenStreetMap (flutter_map) veya Google Maps SDK ile anlık konum haritası.
+/// OpenStreetMap (flutter_map) ile anlık konum haritası.
 class MapWidget extends StatefulWidget {
   final SettingsService settings;
   final LocationService location;
@@ -93,23 +81,17 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
 
   final _mc = MapController();
   final _tileProvider = OfflineTileProvider();
-  g.GoogleMapController? _gc;
-  double _gZoom = 16;
-  MapSupport? _support;
   bool _ready = false;
   bool _follow = true;
   bool _firstFix = true;
-  bool _wasGoogle = false;
 
-  // Google Maps tarzı yumuşak konum & yön interpolasyonu
+  // 60 FPS yumuşak konum & yön interpolasyonu
   late final AnimationController _anim;
   final ValueNotifier<_SmoothLoc> _smooth = ValueNotifier(const _SmoothLoc());
   double? _fromLat, _fromLng, _toLat, _toLng;
   double _fromHeading = 0, _toHeading = 0;
 
   SettingsService get _s => widget.settings;
-
-  bool get _useGoogle => _s.mapProvider == 'google' && (_support?.googleReady ?? false);
 
   @override
   void initState() {
@@ -127,9 +109,6 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
     widget.location.notifier.addListener(_onLocation);
     OfflineMapManager.instance.ensureTilesDir().then((_) {
       if (mounted) setState(() {});
-    });
-    MapSupport.check().then((v) {
-      if (mounted) setState(() => _support = v);
     });
   }
 
@@ -161,7 +140,7 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
     final hdg = _lerpAngle(_fromHeading, _toHeading, t);
     _smooth.value = _SmoothLoc(lat: lat, lng: lng, heading: hdg);
 
-    if (_follow && !_useGoogle && _ready) {
+    if (_follow && _ready) {
       final zoom = _mc.camera.zoom;
       final bearing = _s.mapRotate ? hdg : 0.0;
       _mc.moveAndRotate(LatLng(lat, lng), zoom, -bearing);
@@ -196,15 +175,7 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
 
     if (!_follow) return;
     final bearing = _s.mapRotate ? d.heading : 0.0;
-    if (_useGoogle) {
-      final c = _gc;
-      if (c == null) return;
-      final zoom = _firstFix ? _s.mapZoom : _gZoom;
-      _firstFix = false;
-      c.animateCamera(g.CameraUpdate.newCameraPosition(
-        g.CameraPosition(target: g.LatLng(d.lat!, d.lng!), zoom: zoom, bearing: bearing),
-      ));
-    } else if (_ready) {
+    if (_ready) {
       if (_firstFix || isJump) {
         final zoom = _firstFix ? _s.mapZoom : _mc.camera.zoom;
         _firstFix = false;
@@ -217,7 +188,7 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
     setState(() => _follow = true);
     _firstFix = true;
     final cur = _smooth.value;
-    if (!_useGoogle && _ready && cur.lat != null && cur.lng != null) {
+    if (_ready && cur.lat != null && cur.lng != null) {
       final bearing = _s.mapRotate ? cur.heading : 0.0;
       _mc.moveAndRotate(LatLng(cur.lat!, cur.lng!), _s.mapZoom, -bearing);
       _firstFix = false;
@@ -227,19 +198,10 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
   }
 
   void _zoom(double delta) {
-    if (_useGoogle) {
-      _gc?.animateCamera(delta > 0 ? g.CameraUpdate.zoomIn() : g.CameraUpdate.zoomOut());
-    } else if (_ready) {
+    if (_ready) {
       _mc.move(_mc.camera.center, (_mc.camera.zoom + delta).clamp(3.0, 19.0));
     }
   }
-
-  g.MapType get _gType => switch (_s.googleMapType) {
-        'satellite' => g.MapType.satellite,
-        'terrain' => g.MapType.terrain,
-        'hybrid' => g.MapType.hybrid,
-        _ => g.MapType.normal,
-      };
 
   Widget _osmMap(DashiaColors c, LatLng start, bool hasPos) {
     final hasOfflineRegion = OfflineMapManager.instance.regions.isNotEmpty;
@@ -298,43 +260,11 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
     );
   }
 
-  Widget _googleMap(LatLng start, bool hasPos) {
-    return Listener(
-      onPointerMove: (e) {
-        if (_follow && e.delta.distance > 2) setState(() => _follow = false);
-      },
-      child: g.GoogleMap(
-        initialCameraPosition: g.CameraPosition(target: g.LatLng(start.latitude, start.longitude), zoom: hasPos ? _s.mapZoom : 6),
-        mapType: _gType,
-        style: _s.mapDark && _s.googleMapType == 'roadmap' ? _googleDarkStyle : null,
-        myLocationEnabled: hasPos,
-        myLocationButtonEnabled: false,
-        zoomControlsEnabled: false,
-        mapToolbarEnabled: false,
-        compassEnabled: false,
-        tiltGesturesEnabled: false,
-        onMapCreated: (c) {
-          _gc = c;
-          _onLocation();
-        },
-        onCameraMove: (p) => _gZoom = p.zoom,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = context.c;
     final s = _s;
     final tr = s.tr;
-    final googleWanted = s.mapProvider == 'google';
-    final useGoogle = _useGoogle;
-    if (useGoogle != _wasGoogle) {
-      _wasGoogle = useGoogle;
-      _ready = false;
-      _gc = null;
-      _firstFix = true;
-    }
     final d = widget.location.notifier.value;
     final hasPos = d.lat != null;
     final regions = OfflineMapManager.instance.regions;
@@ -342,9 +272,6 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
     final start = hasPos ? LatLng(d.lat!, d.lng!) : fallbackCenter;
 
     String? banner;
-    if (googleWanted && _support != null && !useGoogle) {
-      banner = '${_support!.problem} → OpenStreetMap';
-    }
     if (d.permissionDenied) banner = tr.locPermDenied;
     if (d.serviceDisabled) banner = tr.locServiceDisabled;
 
@@ -353,9 +280,7 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
       clipBehavior: Clip.antiAlias,
       child: Stack(children: [
         Positioned.fill(
-          child: (googleWanted && _support == null)
-              ? const SizedBox.shrink()
-              : (useGoogle ? _googleMap(start, hasPos) : _osmMap(c, start, hasPos)),
+          child: _osmMap(c, start, hasPos),
         ),
 
         // Hız çipi
@@ -381,7 +306,7 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
             ),
           ),
 
-        // Üst sağ: Google Haritalar uygulaması + özelleştir
+        // Üst sağ: Harita uygulaması + özelleştir
         Positioned(
           right: 10,
           top: 10,
@@ -410,16 +335,15 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
           ]),
         ),
 
-        if (!useGoogle)
-          Positioned(
-            left: 8,
-            bottom: 6,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              color: Colors.black54,
-              child: const Text('© OpenStreetMap', style: TextStyle(fontSize: 11, color: Colors.white70)),
-            ),
+        Positioned(
+          left: 8,
+          bottom: 6,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            color: Colors.black54,
+            child: const Text('© OpenStreetMap', style: TextStyle(fontSize: 11, color: Colors.white70)),
           ),
+        ),
 
         if (banner != null)
           Positioned(

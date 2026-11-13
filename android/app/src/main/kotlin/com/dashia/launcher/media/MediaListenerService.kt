@@ -83,6 +83,10 @@ class MediaListenerService : NotificationListenerService() {
 
         fun isPlaying(c: MediaController?) = c?.playbackState?.state == PlaybackState.STATE_PLAYING
 
+        fun requestPublish() {
+            instance?.publish()
+        }
+
         fun isBluetoothPackage(pkg: String?): Boolean {
             val p = pkg?.lowercase() ?: return false
             return p.contains("bluetooth") || p.contains("a2dp") || p.contains("avrcp") ||
@@ -400,6 +404,9 @@ class MediaListenerService : NotificationListenerService() {
                     "isPlaying" to fyt.isPlaying,
                     "packageName" to "com.syu.bt",
                     "albumArt" to null,
+                    "positionMs" to 0L,
+                    "durationMs" to 0L,
+                    "canSeek" to false,
                 )
             }
             activeSource == "broadcast" && b != null -> {
@@ -412,6 +419,9 @@ class MediaListenerService : NotificationListenerService() {
                     "isPlaying" to b.playing,
                     "packageName" to "broadcast:${b.action}",
                     "albumArt" to artBytes,
+                    "positionMs" to 0L,
+                    "durationMs" to 0L,
+                    "canSeek" to false,
                 )
             }
             c == null -> mapOf("hasSession" to false)
@@ -425,6 +435,11 @@ class MediaListenerService : NotificationListenerService() {
                     ?: m?.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE)
                     ?: ""
                 val album = m?.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
+                val durationMs = (m?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L).coerceAtLeast(0L)
+                val ps = c.playbackState
+                val positionMs = (ps?.position ?: 0L).coerceAtLeast(0L)
+                val isBtPkg = isBluetoothPackage(c.packageName)
+                val canSeek = !isBtPkg && durationMs > 0L
                 val artBytes = art(m, "${c.packageName}|$title|$artist|$album")
 
                 // Şarkı yeni değiştiğinde bazı oynatıcılar (Spotify vb.) kapak resmini 200-800ms gecikmeli yükler.
@@ -443,6 +458,9 @@ class MediaListenerService : NotificationListenerService() {
                     "isPlaying" to isPlaying(c),
                     "packageName" to c.packageName,
                     "albumArt" to artBytes,
+                    "positionMs" to positionMs,
+                    "durationMs" to durationMs,
+                    "canSeek" to canSeek,
                 )
             }
         }

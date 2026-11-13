@@ -33,7 +33,8 @@ class ShortcutIcon extends StatelessWidget {
   final AppLauncherService apps;
   final ShortcutConfig shortcut;
   final double size;
-  const ShortcutIcon({super.key, required this.apps, required this.shortcut, this.size = 32});
+  final Color? color;
+  const ShortcutIcon({super.key, required this.apps, required this.shortcut, this.size = 32, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +58,6 @@ class ShortcutIcon extends StatelessWidget {
         ),
       );
     }
-    return Icon(IconRegistry.byKey(key), size: size, color: c.text);
+    return Icon(IconRegistry.byKey(key), size: size, color: color ?? c.text);
   }
 }
