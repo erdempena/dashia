@@ -92,6 +92,29 @@ class AppStrings {
   String get themeTitle => _t({'tr': 'Tema', 'en': 'Theme', 'de': 'Thema', 'fr': 'Thème', 'es': 'Tema', 'ru': 'Тема'});
   String get themeDark => _t({'tr': 'Koyu', 'en': 'Dark', 'de': 'Dunkel', 'fr': 'Sombre', 'es': 'Oscuro', 'ru': 'Тёмная'});
   String get themeLight => _t({'tr': 'Açık', 'en': 'Light', 'de': 'Hell', 'fr': 'Clair', 'es': 'Claro', 'ru': 'Светлая'});
+  String get dayNightAutoTitle => _t({
+        'tr': 'Gece / Gündüz otomatik döngüsü',
+        'en': 'Automatic Day / Night cycle',
+        'de': 'Automatischer Tag-/Nachtzyklus',
+        'fr': 'Cycle Jour / Nuit automatique',
+        'es': 'Ciclo Día / Noche automático',
+        'ru': 'Автоматический режим День / Ночь',
+      });
+  String get dayNightAutoSub => _t({
+        'tr': 'Belirlediğiniz saat aralığında uygulama ve harita temalarını gündüz ve gece modları arasında otomatik değiştirir.',
+        'en': 'Automatically switches app and map themes between your chosen Day and Night presets based on time of day.',
+        'de': 'Wechselt App- und Kartenthemen automatisch nach Uhrzeit zwischen Tag- und Nachtmodus.',
+        'fr': 'Bascule automatiquement les thèmes de l\'application et de la carte selon l\'heure.',
+        'es': 'Cambia automáticamente los temas de la aplicación y del mapa según la hora.',
+        'ru': 'Автоматически переключает темы приложения и карты по времени суток.',
+      });
+  String get dayModeTitle => _t({'tr': 'Gündüz Modu', 'en': 'Day Mode', 'de': 'Tagmodus', 'fr': 'Mode Jour', 'es': 'Modo Día', 'ru': 'Дневной режим'});
+  String get nightModeTitle => _t({'tr': 'Gece Modu', 'en': 'Night Mode', 'de': 'Nachtmodus', 'fr': 'Mode Nuit', 'es': 'Modo Noche', 'ru': 'Ночной режим'});
+  String get dayStartLabel => _t({'tr': 'Gündüz Başlangıcı', 'en': 'Day Starts At', 'de': 'Tagbeginn', 'fr': 'Début du jour', 'es': 'Inicio del día', 'ru': 'Начало дня'});
+  String get nightStartLabel => _t({'tr': 'Gece Başlangıcı', 'en': 'Night Starts At', 'de': 'Nachtbeginn', 'fr': 'Début de la nuit', 'es': 'Inicio de la noche', 'ru': 'Начало ночи'});
+  String get activeNowLabel => _t({'tr': 'Şu an aktif', 'en': 'Active now', 'de': 'Jetzt aktiv', 'fr': 'Actif', 'es': 'Activo ahora', 'ru': 'Активно сейчас'});
+  String get appThemeLabel => _t({'tr': 'Uygulama Teması', 'en': 'App Theme', 'de': 'App-Thema', 'fr': 'Thème de l\'application', 'es': 'Tema de la app', 'ru': 'Тема приложения'});
+  String get mapThemeLabel => _t({'tr': 'Harita Teması', 'en': 'Map Theme', 'de': 'Kartenthema', 'fr': 'Thème de la carte', 'es': 'Tema del mapa', 'ru': 'Тема карты'});
   String get accentColor => _t({'tr': 'Vurgu rengi', 'en': 'Accent color', 'de': 'Akzentfarbe', 'fr': 'Couleur d\'accent', 'es': 'Color de acento', 'ru': 'Акцентный цвет'});
   String get customHexLabel => _t({'tr': 'Özel renk kodu (HEX)', 'en': 'Custom color (HEX)', 'de': 'Eigene Farbe (HEX)', 'fr': 'Couleur HEX', 'es': 'Color personalizado (HEX)', 'ru': 'Свой цвет (HEX)'});
   String get saveColorBtn => _t({'tr': 'Rengi Kaydet', 'en': 'Save Color', 'de': 'Farbe speichern', 'fr': 'Enregistrer couleur', 'es': 'Guardar color', 'ru': 'Сохранить цвет'});

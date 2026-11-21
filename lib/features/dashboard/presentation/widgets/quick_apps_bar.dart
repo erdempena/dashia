@@ -25,6 +25,10 @@ class QuickAppsBar extends StatelessWidget {
   });
 
   Future<void> _launch(BuildContext context, ShortcutConfig s) async {
+    if (s.package == SettingsService.dayNightTogglePackage) {
+      settings.toggleDayNight();
+      return;
+    }
     final messenger = ScaffoldMessenger.of(context);
     if (s.package == null) {
       await showShortcutEditor(context, settings: settings, apps: apps, existing: s);

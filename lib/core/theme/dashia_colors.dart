@@ -29,8 +29,9 @@ class DashiaColors extends ThemeExtension<DashiaColors> {
 
   factory DashiaColors.from(SettingsService s) {
     final accent = Color(s.accent);
-    final amoled = s.themeMode == 'amoled';
-    final light = s.themeMode == 'light';
+    final activeMode = s.effectiveThemeMode;
+    final amoled = activeMode == 'amoled';
+    final light = activeMode == 'light';
     final onAccent = accent.computeLuminance() > 0.45 ? const Color(0xFF0B0F14) : Colors.white;
 
     if (s.uiStyle == 'minimalist') {

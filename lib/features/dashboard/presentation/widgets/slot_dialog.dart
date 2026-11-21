@@ -185,7 +185,12 @@ class _SlotDialog extends StatelessWidget {
         ]);
       case DashWidget.map:
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(t.osmThemeTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(
+            s.dayNightAuto
+                ? '${t.osmThemeTitle} (${s.isDayTime ? t.dayModeTitle : t.nightModeTitle})'
+                : t.osmThemeTitle,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 6),
           SegmentedButton<String>(
             segments: [
@@ -195,10 +200,18 @@ class _SlotDialog extends StatelessWidget {
               ButtonSegment(value: 'midnight', label: Text(t.mapMidnight)),
               ButtonSegment(value: 'warm', label: Text(t.mapWarm)),
             ],
-            selected: {s.osmTheme},
+            selected: {s.effectiveOsmTheme},
             onSelectionChanged: (v) => s.update(() {
-              s.osmTheme = v.first;
-              s.mapDark = s.osmTheme != 'light';
+              if (s.dayNightAuto) {
+                if (s.isDayTime) {
+                  s.dayOsmTheme = v.first;
+                } else {
+                  s.nightOsmTheme = v.first;
+                }
+              } else {
+                s.osmTheme = v.first;
+                s.mapDark = s.osmTheme != 'light';
+              }
             }),
           ),
           const SizedBox(height: 4),

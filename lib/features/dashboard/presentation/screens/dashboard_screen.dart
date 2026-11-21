@@ -256,6 +256,10 @@ class _SideShortcutsCard extends StatelessWidget {
   });
 
   Future<void> _launch(BuildContext context, ShortcutConfig s) async {
+    if (s.package == SettingsService.dayNightTogglePackage) {
+      settings.toggleDayNight();
+      return;
+    }
     if (s.package == null) {
       await showShortcutEditor(context, settings: settings, apps: apps, existing: s, isSidePanel: true);
       return;

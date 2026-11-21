@@ -5,6 +5,7 @@ class IconRegistry {
   IconRegistry._();
 
   static const Map<String, IconData> icons = {
+    'day_night': Icons.wb_sunny_rounded,
     'navigation': Icons.navigation_rounded,
     'map': Icons.map_rounded,
     'music': Icons.music_note_rounded,

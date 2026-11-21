@@ -154,17 +154,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
         sub: tr.uiStyleSub,
       ),
       _row(
-        tr.themeTitle,
-        SegmentedButton<String>(
-          segments: [
-            ButtonSegment(value: 'dark', label: Text(tr.themeDark), icon: const Icon(Icons.dark_mode_rounded)),
-            const ButtonSegment(value: 'amoled', label: Text('AMOLED'), icon: Icon(Icons.brightness_1_rounded)),
-            ButtonSegment(value: 'light', label: Text(tr.themeLight), icon: const Icon(Icons.light_mode_rounded)),
+        tr.dayNightAutoTitle,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (s.dayNightAuto) ...[
+              FilledButton.tonalIcon(
+                onPressed: s.toggleDayNight,
+                icon: const DayNightSwitchIcon(size: 20),
+                label: Text(s.isDayTime ? tr.dayModeTitle : tr.nightModeTitle),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Switch(
+              value: s.dayNightAuto,
+              onChanged: (v) => s.update(() => s.dayNightAuto = v),
+            ),
           ],
-          selected: {s.themeMode},
-          onSelectionChanged: (v) => s.update(() => s.themeMode = v.first),
         ),
+        sub: tr.dayNightAutoSub,
       ),
+      if (!s.dayNightAuto)
+        _row(
+          tr.themeTitle,
+          SegmentedButton<String>(
+            segments: [
+              ButtonSegment(value: 'dark', label: Text(tr.themeDark), icon: const Icon(Icons.dark_mode_rounded)),
+              const ButtonSegment(value: 'amoled', label: Text('AMOLED'), icon: Icon(Icons.brightness_1_rounded)),
+              ButtonSegment(value: 'light', label: Text(tr.themeLight), icon: const Icon(Icons.light_mode_rounded)),
+            ],
+            selected: {s.effectiveThemeMode},
+            onSelectionChanged: (v) => s.update(() {
+              s.themeMode = v.first;
+              s.dayNightOverrideIsDay = null;
+              s.dayNightOverrideExpiresAtMs = null;
+            }),
+          ),
+        )
+      else ...[
+        const SizedBox(height: 6),
+        _DayNightCycleCard(settings: s),
+      ],
       const SizedBox(height: 8),
       Text(tr.accentColor, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
       const SizedBox(height: 10),
@@ -526,7 +556,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Dashia v1.3.0', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              const Text('Dashia v1.3.1', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
               Text(tr.systemAboutDesc, style: TextStyle(color: c.textMuted)),
               const SizedBox(height: 4),
@@ -536,6 +566,270 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ]),
       ),
     ];
+  }
+}
+
+/// Gece & Gündüz otomatik döngüsü ayar kartı:
+/// Saat aralığı (Gündüz başlangıcı A – Gece başlangıcı B) + Gündüz/Gece için ayrı Uygulama ve Harita teması seçimi.
+class _DayNightCycleCard extends StatelessWidget {
+  final SettingsService settings;
+  const _DayNightCycleCard({required this.settings});
+
+  Future<void> _pickTime(BuildContext context, {required bool isDay}) async {
+    final curMin = isDay ? settings.dayStartMinutes : settings.nightStartMinutes;
+    final initial = TimeOfDay(hour: curMin ~/ 60, minute: curMin % 60);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      final total = picked.hour * 60 + picked.minute;
+      settings.update(() {
+        if (isDay) {
+          settings.dayStartMinutes = total;
+        } else {
+          settings.nightStartMinutes = total;
+        }
+      });
+    }
+  }
+
+  void _stepTime({required bool isDay, required int deltaMinutes}) {
+    settings.update(() {
+      if (isDay) {
+        settings.dayStartMinutes = (settings.dayStartMinutes + deltaMinutes + 1440) % 1440;
+      } else {
+        settings.nightStartMinutes = (settings.nightStartMinutes + deltaMinutes + 1440) % 1440;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final tr = settings.tr;
+    final isDayNow = settings.isDayTime;
+    final dayTimeStr = SettingsService.formatMinutes(settings.dayStartMinutes);
+    final nightTimeStr = SettingsService.formatMinutes(settings.nightStartMinutes);
+
+    final mapThemes = [
+      ('light', tr.themeLight, Icons.light_mode_rounded),
+      ('dark', tr.themeDark, Icons.dark_mode_rounded),
+      ('amoled', 'AMOLED', Icons.brightness_1_rounded),
+      ('midnight', 'Midnight', Icons.nights_stay_rounded),
+      ('warm', 'Amber', Icons.wb_twilight_rounded),
+    ];
+
+    Widget timeBox({
+      required bool isDay,
+      required IconData icon,
+      required Color iconColor,
+      required String label,
+      required String timeText,
+      required String rangeSub,
+    }) {
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(c.radius),
+            border: Border.all(color: c.border),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor, size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => _pickTime(context, isDay: isDay),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: c.textMuted)),
+                      const SizedBox(height: 2),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(timeText, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                          const SizedBox(width: 6),
+                          Icon(Icons.access_time_rounded, size: 16, color: c.accent),
+                        ],
+                      ),
+                      Text(rangeSub, style: TextStyle(fontSize: 11, color: c.textMuted)),
+                    ],
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: '-30 dk',
+                onPressed: () => _stepTime(isDay: isDay, deltaMinutes: -30),
+                icon: const Icon(Icons.remove_circle_outline_rounded, size: 22),
+              ),
+              IconButton(
+                tooltip: '+30 dk',
+                onPressed: () => _stepTime(isDay: isDay, deltaMinutes: 30),
+                icon: const Icon(Icons.add_circle_outline_rounded, size: 22),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget modeCard({
+      required bool isActive,
+      required IconData icon,
+      required Color badgeColor,
+      required String title,
+      required String hoursText,
+      required String appThemeValue,
+      required void Function(String) onAppThemeChanged,
+      required String mapThemeValue,
+      required void Function(String) onMapThemeChanged,
+    }) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(c.radius),
+          border: Border.all(color: isActive ? c.accent : c.border, width: isActive ? 2 : 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: badgeColor, size: 22),
+                const SizedBox(width: 8),
+                Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                const SizedBox(width: 8),
+                Text('($hoursText)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.textMuted)),
+                const Spacer(),
+                if (isActive)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: c.accent.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: c.accent.withValues(alpha: 0.5)),
+                    ),
+                    child: Text(
+                      tr.activeNowLabel,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: c.accent),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                SizedBox(
+                  width: 140,
+                  child: Text(tr.appThemeLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                ),
+                Expanded(
+                  child: SegmentedButton<String>(
+                    segments: [
+                      ButtonSegment(value: 'light', label: Text(tr.themeLight), icon: const Icon(Icons.light_mode_rounded, size: 18)),
+                      ButtonSegment(value: 'dark', label: Text(tr.themeDark), icon: const Icon(Icons.dark_mode_rounded, size: 18)),
+                      const ButtonSegment(value: 'amoled', label: Text('AMOLED'), icon: Icon(Icons.brightness_1_rounded, size: 18)),
+                    ],
+                    selected: {appThemeValue},
+                    onSelectionChanged: (v) => onAppThemeChanged(v.first),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 140,
+                  child: Text(tr.mapThemeLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                ),
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final (key, label, mIcon) in mapThemes)
+                        ChoiceChip(
+                          selected: mapThemeValue == key,
+                          onSelected: (_) => onMapThemeChanged(key),
+                          avatar: Icon(mIcon, size: 16),
+                          label: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: c.card(color: c.surfaceAlt),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              timeBox(
+                isDay: true,
+                icon: Icons.wb_sunny_rounded,
+                iconColor: Colors.amber,
+                label: tr.dayStartLabel,
+                timeText: dayTimeStr,
+                rangeSub: '$dayTimeStr – $nightTimeStr',
+              ),
+              const SizedBox(width: 12),
+              timeBox(
+                isDay: false,
+                icon: Icons.nights_stay_rounded,
+                iconColor: Colors.lightBlueAccent,
+                label: tr.nightStartLabel,
+                timeText: nightTimeStr,
+                rangeSub: '$nightTimeStr – $dayTimeStr',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          modeCard(
+            isActive: isDayNow,
+            icon: Icons.wb_sunny_rounded,
+            badgeColor: Colors.amber,
+            title: tr.dayModeTitle,
+            hoursText: '$dayTimeStr – $nightTimeStr',
+            appThemeValue: settings.dayThemeMode,
+            onAppThemeChanged: (v) => settings.update(() => settings.dayThemeMode = v),
+            mapThemeValue: settings.dayOsmTheme,
+            onMapThemeChanged: (v) => settings.update(() => settings.dayOsmTheme = v),
+          ),
+          const SizedBox(height: 10),
+          modeCard(
+            isActive: !isDayNow,
+            icon: Icons.nights_stay_rounded,
+            badgeColor: Colors.lightBlueAccent,
+            title: tr.nightModeTitle,
+            hoursText: '$nightTimeStr – $dayTimeStr',
+            appThemeValue: settings.nightThemeMode,
+            onAppThemeChanged: (v) => settings.update(() => settings.nightThemeMode = v),
+            mapThemeValue: settings.nightOsmTheme,
+            onMapThemeChanged: (v) => settings.update(() => settings.nightOsmTheme = v),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -974,29 +1268,75 @@ class _MapSettingsState extends State<_MapSettings> {
           },
         ),
         const Divider(height: 24),
-        Text(tr.mapThemeTitle, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        Wrap(spacing: 10, runSpacing: 10, children: [
-          for (final (key, label, icon) in [
-            ('light', tr.themeLight, Icons.light_mode_rounded),
-            ('dark', tr.themeDark, Icons.dark_mode_rounded),
-            ('amoled', 'AMOLED', Icons.brightness_1_rounded),
-            ('midnight', 'Midnight', Icons.nights_stay_rounded),
-            ('warm', 'Amber', Icons.wb_twilight_rounded),
-          ])
-            ChoiceChip(
-              selected: s.osmTheme == key,
-              onSelected: (_) => s.update(() {
-                s.osmTheme = key;
-                s.mapDark = key != 'light';
-              }),
-              avatar: Icon(icon, size: 18),
-              label: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        if (!s.dayNightAuto) ...[
+          Text(tr.mapThemeTitle, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 10, runSpacing: 10, children: [
+            for (final (key, label, icon) in [
+              ('light', tr.themeLight, Icons.light_mode_rounded),
+              ('dark', tr.themeDark, Icons.dark_mode_rounded),
+              ('amoled', 'AMOLED', Icons.brightness_1_rounded),
+              ('midnight', 'Midnight', Icons.nights_stay_rounded),
+              ('warm', 'Amber', Icons.wb_twilight_rounded),
+            ])
+              ChoiceChip(
+                selected: s.effectiveOsmTheme == key,
+                onSelected: (_) => s.update(() {
+                  s.osmTheme = key;
+                  s.mapDark = key != 'light';
+                  s.dayNightOverrideIsDay = null;
+                  s.dayNightOverrideExpiresAtMs = null;
+                }),
+                avatar: Icon(icon, size: 18),
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
               ),
-            ),
-        ]),
+          ]),
+        ] else ...[
+          Text('${tr.mapThemeTitle} (${tr.dayModeTitle})', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 10, runSpacing: 10, children: [
+            for (final (key, label, icon) in [
+              ('light', tr.themeLight, Icons.light_mode_rounded),
+              ('dark', tr.themeDark, Icons.dark_mode_rounded),
+              ('amoled', 'AMOLED', Icons.brightness_1_rounded),
+              ('midnight', 'Midnight', Icons.nights_stay_rounded),
+              ('warm', 'Amber', Icons.wb_twilight_rounded),
+            ])
+              ChoiceChip(
+                selected: s.dayOsmTheme == key,
+                onSelected: (_) => s.update(() => s.dayOsmTheme = key),
+                avatar: Icon(icon, size: 18),
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ),
+          ]),
+          const SizedBox(height: 14),
+          Text('${tr.mapThemeTitle} (${tr.nightModeTitle})', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          Wrap(spacing: 10, runSpacing: 10, children: [
+            for (final (key, label, icon) in [
+              ('light', tr.themeLight, Icons.light_mode_rounded),
+              ('dark', tr.themeDark, Icons.dark_mode_rounded),
+              ('amoled', 'AMOLED', Icons.brightness_1_rounded),
+              ('midnight', 'Midnight', Icons.nights_stay_rounded),
+              ('warm', 'Amber', Icons.wb_twilight_rounded),
+            ])
+              ChoiceChip(
+                selected: s.nightOsmTheme == key,
+                onSelected: (_) => s.update(() => s.nightOsmTheme = key),
+                avatar: Icon(icon, size: 18),
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ),
+          ]),
+        ],
         const SizedBox(height: 8),
         SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(tr.mapShowSpeedTitle, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)), value: s.mapShowSpeed, onChanged: (v) => s.update(() => s.mapShowSpeed = v)),
         SwitchListTile(contentPadding: EdgeInsets.zero, title: Text(tr.mapRotateTitle, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)), value: s.mapRotate, onChanged: (v) => s.update(() => s.mapRotate = v)),

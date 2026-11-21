@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/icon_registry.dart';
 import '../../../../core/theme/dashia_colors.dart';
@@ -40,6 +41,11 @@ class ShortcutIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.c;
     final key = shortcut.iconKey;
+    final isDayNightToggle =
+        shortcut.package == SettingsService.dayNightTogglePackage || key == 'day_night';
+    if (isDayNightToggle && !key.startsWith('file:')) {
+      return DayNightSwitchIcon(size: size, color: color);
+    }
     if (key == 'app') {
       return AppIcon(apps: apps, package: shortcut.package, size: size);
     }
@@ -59,5 +65,73 @@ class ShortcutIcon extends StatelessWidget {
       );
     }
     return Icon(IconRegistry.byKey(key), size: size, color: color ?? c.text);
+  }
+}
+
+/// Gece / Gündüz geçiş tuşu için diğer uygulama ikonlarıyla aynı renkte, sade ve minimal Güneş <-> Ay animasyonlu ikon.
+class DayNightSwitchIcon extends StatelessWidget {
+  final double size;
+  final Color? color;
+  const DayNightSwitchIcon({super.key, this.size = 32, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    final iconColor = color ?? c.text;
+    return ValueListenableBuilder<bool>(
+      valueListenable: SettingsService.isDayNotifier,
+      builder: (context, isDay, _) {
+        return TweenAnimationBuilder<double>(
+          tween: Tween<double>(end: isDay ? 0.0 : 1.0),
+          duration: const Duration(milliseconds: 380),
+          curve: Curves.easeOutCubic,
+          builder: (context, t, _) {
+            final clamped = t.clamp(0.0, 1.0);
+            final sunOpacity = (1.0 - clamped).clamp(0.0, 1.0);
+            final moonOpacity = clamped.clamp(0.0, 1.0);
+
+            return SizedBox(
+              width: size,
+              height: size,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (sunOpacity > 0.01)
+                    Opacity(
+                      opacity: sunOpacity,
+                      child: Transform.rotate(
+                        angle: clamped * math.pi * 0.5,
+                        child: Transform.scale(
+                          scale: 1.0 - clamped * 0.35,
+                          child: Icon(
+                            Icons.light_mode_rounded,
+                            size: size,
+                            color: iconColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (moonOpacity > 0.01)
+                    Opacity(
+                      opacity: moonOpacity,
+                      child: Transform.rotate(
+                        angle: -(1.0 - clamped) * math.pi * 0.5,
+                        child: Transform.scale(
+                          scale: 0.65 + clamped * 0.35,
+                          child: Icon(
+                            Icons.dark_mode_rounded,
+                            size: size,
+                            color: iconColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }

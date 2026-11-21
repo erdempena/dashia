@@ -63,7 +63,7 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
     0, 0, 0, 1, 0,
   ];
 
-  List<double>? get _activeOsmMatrix => switch (_s.osmTheme) {
+  List<double>? get _activeOsmMatrix => switch (_s.effectiveOsmTheme) {
         'light' => null,
         'amoled' => _amoledMatrix,
         'midnight' => _midnightMatrix,
@@ -71,7 +71,7 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
         _ => _darkMatrix,
       };
 
-  Color _osmBg(DashiaColors c) => switch (_s.osmTheme) {
+  Color _osmBg(DashiaColors c) => switch (_s.effectiveOsmTheme) {
         'light' => const Color(0xFFE8E6E1),
         'amoled' => Colors.black,
         'midnight' => const Color(0xFF0A1222),
@@ -224,7 +224,7 @@ class _MapWidgetState extends State<MapWidget> with SingleTickerProviderStateMix
       ),
       children: [
         TileLayer(
-          key: ValueKey('${_s.osmUrl}|${_s.osmTheme}'),
+          key: ValueKey('${_s.osmUrl}|${_s.effectiveOsmTheme}'),
           urlTemplate: _s.osmUrl,
           tileProvider: _tileProvider,
           userAgentPackageName: 'com.dashia.launcher',

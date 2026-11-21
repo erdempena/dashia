@@ -118,7 +118,12 @@ class _ShortcutEditorState extends State<_ShortcutEditor> with SingleTickerProvi
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(_draft.label, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                  Text(selectedApp?.label ?? _package ?? 'Uygulama seçilmedi', style: TextStyle(color: c.textMuted)),
+                  Text(
+                    _package == SettingsService.dayNightTogglePackage
+                        ? 'Gece / Gündüz Modu Anahtarı (Tek Tıkla Geçiş)'
+                        : (selectedApp?.label ?? _package ?? 'Uygulama seçilmedi'),
+                    style: TextStyle(color: c.textMuted),
+                  ),
                 ]),
               ),
               if (widget.existing != null)
@@ -186,7 +191,7 @@ class _ShortcutEditorState extends State<_ShortcutEditor> with SingleTickerProvi
                                   ),
                                 ),
                               ),
-                            if (_package != null)
+                            if (_package != null && _package != SettingsService.dayNightTogglePackage)
                               _IconTile(
                                 selected: _iconKey == 'app',
                                 onTap: () => setState(() => _iconKey = 'app'),
@@ -196,7 +201,9 @@ class _ShortcutEditorState extends State<_ShortcutEditor> with SingleTickerProvi
                               _IconTile(
                                 selected: _iconKey == e.key,
                                 onTap: () => setState(() => _iconKey = e.key),
-                                child: Icon(e.value, size: 30),
+                                child: e.key == 'day_night'
+                                    ? const DayNightSwitchIcon(size: 32)
+                                    : Icon(e.value, size: 30),
                               ),
                           ],
                         ),
@@ -235,7 +242,63 @@ class _ShortcutEditorState extends State<_ShortcutEditor> with SingleTickerProvi
                   // UYGULAMA
                   Column(children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 10, bottom: 6),
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Material(
+                        color: _package == SettingsService.dayNightTogglePackage
+                            ? c.accent.withValues(alpha: 0.16)
+                            : c.surfaceAlt,
+                        borderRadius: BorderRadius.circular(c.radius),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(c.radius),
+                          onTap: () => setState(() {
+                            final oldApp = selectedApp;
+                            final auto = _label.text.trim().isEmpty ||
+                                _label.text.trim() == (oldApp?.label ?? '') ||
+                                _label.text.trim() == 'Uygulama';
+                            _package = SettingsService.dayNightTogglePackage;
+                            _iconKey = 'day_night';
+                            if (auto) _label.text = 'Gece/Gündüz';
+                          }),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(c.radius),
+                              border: Border.all(
+                                color: _package == SettingsService.dayNightTogglePackage ? c.accent : c.border,
+                                width: _package == SettingsService.dayNightTogglePackage ? 2 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const DayNightSwitchIcon(size: 36),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Gece / Gündüz Modu Anahtarı (Switch)',
+                                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                                      ),
+                                      Text(
+                                        'Tek tıkla Güneş ☀️ / Ay 🌙 animasyonuyla Gece ve Gündüz modları arasında geçiş yapar',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontSize: 12, color: c.textMuted),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (_package == SettingsService.dayNightTogglePackage)
+                                  Icon(Icons.check_circle_rounded, color: c.accent, size: 22),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 6),
                       child: TextField(
                         decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Uygulama ara', isDense: true),
                         onChanged: (v) => setState(() => _query = v.toLowerCase()),
@@ -260,8 +323,12 @@ class _ShortcutEditorState extends State<_ShortcutEditor> with SingleTickerProvi
                                     subtitle: Text(a.package, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: c.textMuted)),
                                     onTap: () => setState(() {
                                       final oldApp = selectedApp;
-                                      final auto = _label.text.trim().isEmpty || _label.text.trim() == (oldApp?.label ?? '') || _label.text.trim() == 'Uygulama';
+                                      final auto = _label.text.trim().isEmpty ||
+                                          _label.text.trim() == (oldApp?.label ?? '') ||
+                                          _label.text.trim() == 'Uygulama' ||
+                                          _label.text.trim() == 'Gece/Gündüz';
                                       _package = a.package;
+                                      if (_iconKey == 'day_night') _iconKey = 'app';
                                       if (auto) _label.text = a.label.length > 14 ? a.label.substring(0, 14) : a.label;
                                     }),
                                   );

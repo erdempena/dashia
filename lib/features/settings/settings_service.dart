@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,6 +54,8 @@ class SettingsService extends ChangeNotifier {
   static const int maxShortcuts = 6;
   static const int maxSideShortcuts = 4;
   static const String defaultOsmUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  static const String dayNightTogglePackage = 'dashia://day_night_toggle';
+  static final ValueNotifier<bool> isDayNotifier = ValueNotifier<bool>(true);
 
   late SharedPreferences _prefs;
 
@@ -62,6 +65,83 @@ class SettingsService extends ChangeNotifier {
   String uiStyle = 'classic'; // classic | material | minimalist
   String themeMode = 'dark'; // dark | amoled | light
   int accent = 0xFF00D2FF;
+
+  // Gece & Gündüz Otomatik Döngüsü
+  bool dayNightAuto = false;
+  int dayStartMinutes = 7 * 60; // 07:00
+  int nightStartMinutes = 19 * 60; // 19:00
+  String dayThemeMode = 'light'; // light | dark | amoled
+  String nightThemeMode = 'dark'; // light | dark | amoled
+  String dayOsmTheme = 'light'; // light | dark | amoled | midnight | warm
+  String nightOsmTheme = 'warm'; // light | dark | amoled | midnight | warm
+  bool? dayNightOverrideIsDay;
+  int? dayNightOverrideExpiresAtMs;
+
+  Timer? _dayNightTimer;
+  bool? _lastIsDayTime;
+
+  /// Şu anki sistem saatinin gündüz aralığında [dayStartMinutes, nightStartMinutes) olup olmadığını döner.
+  bool get _scheduledIsDay {
+    final now = DateTime.now();
+    final cur = now.hour * 60 + now.minute;
+    if (dayStartMinutes == nightStartMinutes) return true;
+    if (dayStartMinutes < nightStartMinutes) {
+      return cur >= dayStartMinutes && cur < nightStartMinutes;
+    } else {
+      return cur >= dayStartMinutes || cur < nightStartMinutes;
+    }
+  }
+
+  bool get _hasValidOverride {
+    if (dayNightOverrideIsDay == null) return false;
+    if (!dayNightAuto) return true;
+    if (dayNightOverrideExpiresAtMs == null) return false;
+    return DateTime.now().millisecondsSinceEpoch < dayNightOverrideExpiresAtMs!;
+  }
+
+  /// Aktif modun Gündüz (true) mi yoksa Gece (false) mi olduğunu döner.
+  bool get isDayTime {
+    if (_hasValidOverride) return dayNightOverrideIsDay!;
+    if (dayNightAuto) return _scheduledIsDay;
+    return themeMode == 'light';
+  }
+
+  /// Bir sonraki planlı gündüz veya gece geçiş vaktinin milisaniye zaman damgasını hesaplar.
+  int _nextTransitionMs(DateTime now) {
+    final midnight = DateTime(now.year, now.month, now.day);
+    final candidates = <DateTime>[
+      midnight.add(Duration(minutes: dayStartMinutes)),
+      midnight.add(Duration(minutes: nightStartMinutes)),
+      midnight.add(Duration(days: 1, minutes: dayStartMinutes)),
+      midnight.add(Duration(days: 1, minutes: nightStartMinutes)),
+    ].where((dt) => dt.isAfter(now)).toList()
+      ..sort();
+    return candidates.first.millisecondsSinceEpoch;
+  }
+
+  /// Kısayol veya ayarlardan tek tıkla Gece <-> Gündüz modunu değiştirir (sonraki planlı vakte kadar korur).
+  void toggleDayNight() {
+    final nextIsDay = !isDayTime;
+    update(() {
+      dayNightOverrideIsDay = nextIsDay;
+      dayNightOverrideExpiresAtMs = _nextTransitionMs(DateTime.now());
+    });
+  }
+
+  /// Döngü veya manuel switch aktifse gündüz/gece uygulama temasını, aksi halde [themeMode] değerini döner.
+  String get effectiveThemeMode =>
+      (dayNightAuto || _hasValidOverride) ? (isDayTime ? dayThemeMode : nightThemeMode) : themeMode;
+
+  /// Döngü veya manuel switch aktifse gündüz/gece harita temasını, aksi halde [osmTheme] değerini döner.
+  String get effectiveOsmTheme =>
+      (dayNightAuto || _hasValidOverride) ? (isDayTime ? dayOsmTheme : nightOsmTheme) : osmTheme;
+
+  static String formatMinutes(int totalMinutes) {
+    final m = totalMinutes.clamp(0, 24 * 60 - 1);
+    final h = (m ~/ 60).toString().padLeft(2, '0');
+    final min = (m % 60).toString().padLeft(2, '0');
+    return '$h:$min';
+  }
   List<int> savedColors = [];
   double radius = 14;
   bool fullscreen = true;
@@ -125,6 +205,7 @@ class SettingsService extends ChangeNotifier {
       ];
 
   Future<void> load() async {
+    _startDayNightWatcher();
     _prefs = await SharedPreferences.getInstance();
     final raw = _prefs.getString('settings_v1');
     if (raw == null) return;
@@ -133,6 +214,21 @@ class SettingsService extends ChangeNotifier {
       language = j['language'] as String? ?? language;
       uiStyle = j['uiStyle'] ?? uiStyle;
       themeMode = j['themeMode'] ?? themeMode;
+      dayNightAuto = j['dayNightAuto'] as bool? ?? dayNightAuto;
+      dayStartMinutes = ((j['dayStartMinutes'] ?? dayStartMinutes) as num).toInt().clamp(0, 1439);
+      nightStartMinutes = ((j['nightStartMinutes'] ?? nightStartMinutes) as num).toInt().clamp(0, 1439);
+      dayThemeMode = j['dayThemeMode'] as String? ?? dayThemeMode;
+      nightThemeMode = j['nightThemeMode'] as String? ?? nightThemeMode;
+      dayOsmTheme = j['dayOsmTheme'] as String? ?? dayOsmTheme;
+      nightOsmTheme = j['nightOsmTheme'] as String? ?? nightOsmTheme;
+      dayNightOverrideIsDay = j['dayNightOverrideIsDay'] as bool?;
+      dayNightOverrideExpiresAtMs = (j['dayNightOverrideExpiresAtMs'] as num?)?.toInt();
+      if (dayNightOverrideExpiresAtMs != null &&
+          DateTime.now().millisecondsSinceEpoch >= dayNightOverrideExpiresAtMs!) {
+        dayNightOverrideIsDay = null;
+        dayNightOverrideExpiresAtMs = null;
+      }
+      isDayNotifier.value = isDayTime;
       accent = j['accent'] ?? accent;
       savedColors = (j['savedColors'] as List?)?.map((e) => (e as num).toInt()).toList() ?? [];
       radius = (j['radius'] ?? radius).toDouble();
@@ -189,10 +285,40 @@ class SettingsService extends ChangeNotifier {
     }
   }
 
+  void _startDayNightWatcher() {
+    _dayNightTimer?.cancel();
+    _lastIsDayTime = isDayTime;
+    isDayNotifier.value = _lastIsDayTime!;
+    _dayNightTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (dayNightAuto &&
+          dayNightOverrideExpiresAtMs != null &&
+          DateTime.now().millisecondsSinceEpoch >= dayNightOverrideExpiresAtMs!) {
+        dayNightOverrideIsDay = null;
+        dayNightOverrideExpiresAtMs = null;
+        save();
+      }
+      final cur = isDayTime;
+      isDayNotifier.value = cur;
+      if (_lastIsDayTime != cur) {
+        _lastIsDayTime = cur;
+        notifyListeners();
+      }
+    });
+  }
+
   Map<String, dynamic> _toJson() => {
         'language': language,
         'uiStyle': uiStyle,
         'themeMode': themeMode,
+        'dayNightAuto': dayNightAuto,
+        'dayStartMinutes': dayStartMinutes,
+        'nightStartMinutes': nightStartMinutes,
+        'dayThemeMode': dayThemeMode,
+        'nightThemeMode': nightThemeMode,
+        'dayOsmTheme': dayOsmTheme,
+        'nightOsmTheme': nightOsmTheme,
+        'dayNightOverrideIsDay': dayNightOverrideIsDay,
+        'dayNightOverrideExpiresAtMs': dayNightOverrideExpiresAtMs,
         'accent': accent,
         'savedColors': savedColors,
         'radius': radius,
@@ -235,6 +361,8 @@ class SettingsService extends ChangeNotifier {
   /// Değişikliği uygular, kaydeder ve dinleyenleri bilgilendirir.
   void update(VoidCallback change) {
     change();
+    _lastIsDayTime = isDayTime;
+    isDayNotifier.value = _lastIsDayTime!;
     save();
     notifyListeners();
   }
